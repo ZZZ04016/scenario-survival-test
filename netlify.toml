@@ -4,6 +4,7 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  functions = "netlify/functions"
 
 # SPA 路由回退：所有路径都返回 index.html，避免刷新 404
 [[redirects]]
