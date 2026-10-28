@@ -191,9 +191,21 @@ export class AIService {
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
 
-      if (!content) {
+      // 兼容不同模型的 content 格式（字符串或数组）
+      const message = data.choices?.[0]?.message;
+      let content: string | undefined;
+
+      if (typeof message?.content === 'string') {
+        content = message.content;
+      } else if (Array.isArray(message?.content)) {
+        // 新模型可能返回 [{ type: 'text', text: '...' }] 格式
+        content = message.content
+          .map((part: any) => part?.text ?? part?.content ?? '')
+          .join('');
+      }
+
+      if (!content || content.trim().length === 0) {
         throw new Error('AI 返回内容为空，请检查模型名称是否正确');
       }
 
