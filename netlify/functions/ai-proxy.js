@@ -1,4 +1,4 @@
-// Netlify Serverless Function - AI API 代理
+// Netlify Serverless Function - AI API 代理（ESM 语法）
 // 解决浏览器跨域(CORS)问题，同时隐藏 API Key
 // 环境变量在 Netlify 控制台配置：
 //   VITE_AI_API_BASE, VITE_AI_API_KEY, VITE_AI_MODEL
@@ -7,7 +7,7 @@ const API_BASE = process.env.VITE_AI_API_BASE || '';
 const API_KEY = process.env.VITE_AI_API_KEY || '';
 const MODEL = process.env.VITE_AI_MODEL || '';
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   // 仅允许 POST
   if (event.httpMethod !== 'POST') {
     return {
@@ -33,6 +33,10 @@ exports.handler = async (event) => {
 
     const url = `${API_BASE.replace(/\/$/, '')}/chat/completions`;
 
+    // 设置 25 秒超时（Netlify 免费版上限约 10 秒，付费版 26 秒）
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -45,9 +49,10 @@ exports.handler = async (event) => {
         temperature: 0.8,
         max_tokens: 2000,
       }),
-      timeout: 60000,
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
     const data = await response.json();
 
     if (!response.ok) {
