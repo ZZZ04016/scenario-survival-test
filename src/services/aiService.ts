@@ -131,12 +131,19 @@ export class AIService {
 
   /**
    * 生成剧情
+   * 优先调用真实 AI（通过 Netlify 代理函数避免跨域问题）
+   * 失败时自动降级到 Mock 模式，保证用户体验不中断
    */
   async generateStory(params: GenerateStoryParams): Promise<StoryResult> {
     if (this.useMock) {
       return this.generateMockStory(params);
     }
-    return this.generateRealStory(params);
+    try {
+      return await this.generateRealStory(params);
+    } catch (error) {
+      console.warn('[AIService] 真实 AI 生成失败，降级到 Mock 模式:', error);
+      return this.generateMockStory(params);
+    }
   }
 
   /**
