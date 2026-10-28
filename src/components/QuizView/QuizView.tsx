@@ -62,7 +62,7 @@ export function QuizView() {
             </h2>
 
             <div className="space-y-3">
-              {currentQuestion.options.map((option) => (
+              {currentQuestion.options.map((option, idx) => (
                 <button
                   key={option.id}
                   onClick={() => selectOption(option)}
@@ -70,6 +70,16 @@ export function QuizView() {
                     currentSelection?.id === option.id ? 'option-btn-selected' : ''
                   }`}
                 >
+                  <span
+                    className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors"
+                    style={{
+                      backgroundColor: currentSelection?.id === option.id ? 'var(--color-primary)' : 'var(--color-bg)',
+                      color: currentSelection?.id === option.id ? 'var(--color-btn-text)' : 'var(--color-text-secondary)',
+                      border: '1px solid var(--color-card-border)',
+                    }}
+                  >
+                    {String.fromCharCode(65 + idx)}
+                  </span>
                   <span className="font-medium text-text">{option.text}</span>
                 </button>
               ))}
