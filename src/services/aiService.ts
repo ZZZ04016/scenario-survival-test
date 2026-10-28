@@ -158,7 +158,7 @@ export class AIService {
   }
 
   /**
-   * 真实 API 调用
+   * 真实 API 调用（通过 Netlify 代理函数，避免浏览器 CORS 跨域问题）
    */
   private async generateRealStory(
     params: GenerateStoryParams,
@@ -169,22 +169,24 @@ export class AIService {
     const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
-      const response = await fetch(`${this.apiBase}/chat/completions`, {
+      // 优先使用 Netlify 代理函数（同域，无 CORS 问题）
+      const proxyUrl = '/.netlify/functions/ai-proxy';
+      const response = await fetch(proxyUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: this.model,
           messages: [{ role: 'user', content: prompt }],
-          temperature: 0.8,
         }),
         signal: controller.signal,
       });
 
       if (!response.ok) {
-        const errorMsg = this.getErrorMessage(response.status, await response.text().catch(() => ''));
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg =
+          errorData?.message ||
+          this.getErrorMessage(response.status, '');
         throw new Error(errorMsg);
       }
 
