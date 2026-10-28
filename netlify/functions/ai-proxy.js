@@ -33,9 +33,9 @@ export const handler = async (event) => {
 
     const url = `${API_BASE.replace(/\/$/, '')}/chat/completions`;
 
-    // 设置 25 秒超时（Netlify 免费版上限约 10 秒，付费版 26 秒）
+    // 设置 55 秒超时（给慢 API 足够时间）
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    const timeoutId = setTimeout(() => controller.abort(), 55000);
 
     const response = await fetch(url, {
       method: 'POST',
@@ -47,7 +47,7 @@ export const handler = async (event) => {
         model: MODEL,
         messages,
         temperature: 0.8,
-        max_tokens: 2000,
+        max_tokens: 800,
       }),
       signal: controller.signal,
     });

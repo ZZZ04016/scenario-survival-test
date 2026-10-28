@@ -94,7 +94,7 @@ export class AIService {
     this.apiBase = (config?.apiBase ?? import.meta.env.VITE_AI_API_BASE ?? '').trim();
     this.apiKey = (config?.apiKey ?? import.meta.env.VITE_AI_API_KEY ?? '').trim();
     this.model = (config?.model ?? import.meta.env.VITE_AI_MODEL ?? 'doubao-pro').trim();
-    this.timeoutMs = config?.timeoutMs ?? 30000;
+    this.timeoutMs = config?.timeoutMs ?? 60000;
 
     // Mock 模式判定优先级：
     // 1. 构造参数显式指定 useMock
