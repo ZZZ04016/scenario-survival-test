@@ -227,7 +227,7 @@ export class AIService {
   }
 
   /**
-   * 解析 AI 返回的 JSON
+   * 解析 AI 返回的 JSON（兼容 markdown 代码块、多余文字等情况）
    */
   private parseStoryResponse(content: string): StoryResult {
     try {
@@ -241,12 +241,59 @@ export class AIService {
         shareColor: parsed.shareColor ?? '#c87a35',
       };
     } catch {
-      // 如果 JSON 解析失败，尝试提取 JSON 部分
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return this.parseStoryResponse(jsonMatch[0]);
+      // 尝试去除 markdown 代码块标记
+      let cleaned = content
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+
+      // 尝试直接解析清理后的内容
+      try {
+        const parsed = JSON.parse(cleaned);
+        return {
+          role: parsed.role ?? '',
+          story: Array.isArray(parsed.story) ? parsed.story : [parsed.story ?? ''],
+          ending: parsed.ending ?? '',
+          episodesSurvived: Number(parsed.episodesSurvived) || 1,
+          personalityAnalysis: parsed.personalityAnalysis ?? '',
+          shareColor: parsed.shareColor ?? '#c87a35',
+        };
+      } catch {
+        // 尝试提取第一个 JSON 对象
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            const parsed = JSON.parse(jsonMatch[0]);
+            return {
+              role: parsed.role ?? '',
+              story: Array.isArray(parsed.story) ? parsed.story : [parsed.story ?? ''],
+              ending: parsed.ending ?? '',
+              episodesSurvived: Number(parsed.episodesSurvived) || 1,
+              personalityAnalysis: parsed.personalityAnalysis ?? '',
+              shareColor: parsed.shareColor ?? '#c87a35',
+            };
+          } catch {
+            // 最后尝试：修复常见 JSON 格式问题（单引号转双引号、尾逗号等）
+            const fixed = jsonMatch[0]
+              .replace(/'/g, '"')
+              .replace(/,\s*([}\]])/g, '$1');
+            try {
+              const parsed = JSON.parse(fixed);
+              return {
+                role: parsed.role ?? '',
+                story: Array.isArray(parsed.story) ? parsed.story : [parsed.story ?? ''],
+                ending: parsed.ending ?? '',
+                episodesSurvived: Number(parsed.episodesSurvived) || 1,
+                personalityAnalysis: parsed.personalityAnalysis ?? '',
+                shareColor: parsed.shareColor ?? '#c87a35',
+              };
+            } catch {
+              throw new Error('AI 返回格式错误，无法解析为 JSON');
+            }
+          }
+        }
+        throw new Error('AI 返回格式错误，无法解析为 JSON');
       }
-      throw new Error('AI 返回格式错误，无法解析为 JSON');
     }
   }
 }
