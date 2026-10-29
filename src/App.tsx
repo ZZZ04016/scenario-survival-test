@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAppStore } from './store/useAppStore';
 import { WorldviewSelector } from './components/WorldviewSelector/WorldviewSelector';
+import { ImageUploadView } from './components/ImageUploadView/ImageUploadView';
 import { QuizView } from './components/QuizView/QuizView';
 import { GeneratingView } from './components/GeneratingView/GeneratingView';
 import { ResultView } from './components/ResultView/ResultView';
@@ -41,6 +42,7 @@ function App() {
   return (
     <div className="min-h-screen">
       {stage === 'worldview-select' && <WorldviewSelector />}
+      {stage === 'image-upload' && <ImageUploadView />}
       {stage === 'quiz' && <QuizView />}
       {stage === 'generating' && <GeneratingView />}
       {(stage === 'result' || stage === 'share') && <ResultView />}

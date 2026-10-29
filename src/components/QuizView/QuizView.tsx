@@ -1,12 +1,11 @@
-import { useMemo } from 'react';
 import { useAppStore } from '../../store/useAppStore';
-import { getQuestions } from '../../data/questions';
-import type { WorldviewId } from '../../types';
+
+const TOTAL_QUESTIONS = 10;
 
 export function QuizView() {
   const {
     worldview,
-    tier,
+    questionSequence,
     currentQuestionIndex,
     selectedOptions,
     selectOption,
@@ -15,16 +14,10 @@ export function QuizView() {
     error,
   } = useAppStore();
 
-  const questions = useMemo(() => {
-    if (!worldview) return [];
-    const all = getQuestions(worldview.id as WorldviewId);
-    return tier === 'trial' ? all.slice(0, 5) : all;
-  }, [worldview, tier]);
-
-  const currentQuestion = questions[currentQuestionIndex];
+  const currentQuestion = questionSequence[currentQuestionIndex];
   const currentSelection = selectedOptions[currentQuestionIndex];
-  const isLastQuestion = currentQuestionIndex === questions.length - 1;
-  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+  const isLastQuestion = currentQuestionIndex === TOTAL_QUESTIONS - 1;
+  const progress = ((currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100;
 
   if (!worldview || !currentQuestion) return null;
 
@@ -41,7 +34,7 @@ export function QuizView() {
             ← 返回
           </button>
           <span className="text-sm text-primary font-medium">
-            {currentQuestionIndex + 1} / {questions.length}
+            {currentQuestionIndex + 1} / {TOTAL_QUESTIONS}
           </span>
         </div>
         <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-card-border)' }}>

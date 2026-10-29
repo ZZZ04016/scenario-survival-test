@@ -12,7 +12,7 @@ const LOADING_HINTS = [
 ];
 
 export function GeneratingView() {
-  const { worldview } = useAppStore();
+  const { worldview, streamingText } = useAppStore();
   const [hintIndex, setHintIndex] = useState(() => Math.floor(Math.random() * LOADING_HINTS.length));
 
   useEffect(() => {
@@ -22,38 +22,62 @@ export function GeneratingView() {
     return () => clearInterval(timer);
   }, []);
 
+  // 从流式文本中提取可读内容（去掉 JSON 结构，展示纯文本片段）
+  const displayText = streamingText
+    .replace(/["{}\[\],]/g, ' ')
+    .replace(/\b(role|story|ending|episodesSurvived|personalityAnalysis|shareColor|characterPortrait|name|appearance|background|personalityTags)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const showPreview = displayText.length > 10;
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 animate-fade-in relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 animate-fade-in relative overflow-hidden">
       {/* 背景装饰 */}
       <div
         className="bg-orb animate-float"
-        style={{ width: 300, height: 300, top: '30%', left: '50%', transform: 'translateX(-50%)', background: 'var(--color-primary-light)' }}
+        style={{ width: 300, height: 300, top: '20%', left: '50%', transform: 'translateX(-50%)', background: 'var(--color-primary-light)' }}
       />
 
-      <div className="text-center relative z-10">
-        <div className="text-8xl mb-8 animate-bounce-in">
+      <div className="text-center relative z-10 max-w-md w-full">
+        <div className="text-8xl mb-6 animate-bounce-in">
           {worldview?.coverEmoji ?? '🎬'}
         </div>
 
         {/* 旋转光环 */}
-        <div className="relative w-20 h-20 mx-auto mb-8">
+        <div className="relative w-16 h-16 mx-auto mb-6">
           <div
             className="absolute inset-0 rounded-full border-4 border-transparent animate-spin"
             style={{ borderTopColor: 'var(--color-primary)', borderRightColor: 'var(--color-primary-light)' }}
           />
           <div
-            className="absolute inset-3 rounded-full border-4 border-transparent animate-spin"
+            className="absolute inset-2 rounded-full border-4 border-transparent animate-spin"
             style={{ borderBottomColor: 'var(--color-accent)', animationDirection: 'reverse', animationDuration: '1.5s' }}
           />
         </div>
 
-        <p
-          key={hintIndex}
-          className="text-xl font-serif font-medium text-primary animate-fade-in"
-        >
-          {LOADING_HINTS[hintIndex]}
-        </p>
-        <p className="text-sm text-text-muted mt-3">AI 正在为你生成专属剧情...</p>
+        {showPreview ? (
+          // 流式内容预览（3 秒内首字呈现）
+          <div className="card p-5 text-left max-h-60 overflow-y-auto animate-fade-in">
+            <p className="text-xs font-bold mb-2" style={{ color: 'var(--color-primary)' }}>
+              ✨ 正在生成你的专属剧情...
+            </p>
+            <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
+              {displayText}
+              <span className="inline-block w-2 h-4 ml-1 animate-pulse" style={{ background: 'var(--color-primary)' }} />
+            </p>
+          </div>
+        ) : (
+          <>
+            <p
+              key={hintIndex}
+              className="text-xl font-serif font-medium text-primary animate-fade-in"
+            >
+              {LOADING_HINTS[hintIndex]}
+            </p>
+            <p className="text-sm text-text-muted mt-3">AI 正在为你生成专属剧情...</p>
+          </>
+        )}
       </div>
     </div>
   );

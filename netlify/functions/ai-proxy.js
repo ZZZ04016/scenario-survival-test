@@ -1,5 +1,5 @@
 // Netlify Serverless Function - AI API 代理（ESM 语法）
-// 解决浏览器跨域(CORS)问题，同时隐藏 API Key
+// 支持 SSE 流式输出，实现"边生成边展示"的实时体验
 // 环境变量在 Netlify 控制台配置：
 //   VITE_AI_API_BASE, VITE_AI_API_KEY, VITE_AI_MODEL
 
@@ -30,6 +30,7 @@ export const handler = async (event) => {
   try {
     const body = JSON.parse(event.body || '{}');
     const messages = body.messages || [];
+    const stream = body.stream !== false; // 默认开启流式
 
     const url = `${API_BASE.replace(/\/$/, '')}/chat/completions`;
 
@@ -46,16 +47,17 @@ export const handler = async (event) => {
       body: JSON.stringify({
         model: MODEL,
         messages,
-        temperature: 0.8,
-        max_tokens: 3000,
+        temperature: 0.9, // 提高温度，增加内容多样性（唯一性保障）
+        max_tokens: 4000,
+        stream,
       }),
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
-    const data = await response.json();
 
     if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
       return {
         statusCode: response.status,
         body: JSON.stringify({
@@ -66,10 +68,53 @@ export const handler = async (event) => {
       };
     }
 
+    if (!stream) {
+      // 非流式：直接返回完整 JSON
+      const data = await response.json();
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      };
+    }
+
+    // 流式：将 AI 的 SSE 响应透传给前端
+    // 使用 ReadableStream 实现流式转发
+    const reader = response.body?.getReader();
+    if (!reader) {
+      // 不支持流式时，降级为完整返回
+      const data = await response.json();
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      };
+    }
+
+    const encoder = new TextEncoder();
+    const streamResponse = new ReadableStream({
+      async start(controller) {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            controller.enqueue(value);
+          }
+          controller.close();
+        } catch (err) {
+          controller.error(err);
+        }
+      },
+    });
+
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      },
+      body: streamResponse,
     };
   } catch (error) {
     return {

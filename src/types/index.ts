@@ -38,10 +38,11 @@ export interface QuizOption {
   trait: PersonalityTrait;
 }
 
-// 测验题目
+// 测验题目（带 primaryTrait 用于动态分支选题）
 export interface QuizQuestion {
   id: number;
   text: string;
+  primaryTrait: PersonalityTrait; // 该题主要考察的特质，用于分支选题
   options: QuizOption[];
 }
 
@@ -52,6 +53,14 @@ export interface PersonalityProfile {
   traitScores: Record<PersonalityTrait, number>;
 }
 
+// 角色画像（AI 综合答题+图片生成）
+export interface CharacterPortrait {
+  name: string;              // 角色名
+  appearance: string;        // 外貌形象描述
+  background: string;        // 人物背景设定
+  personalityTags: string[]; // 性格标签数组
+}
+
 // AI 生成的剧情结果
 export interface StoryResult {
   role: string;              // 角色设定
@@ -60,11 +69,19 @@ export interface StoryResult {
   episodesSurvived: number;  // 活了几集
   personalityAnalysis: string; // 性格分析
   shareColor: string;        // 分享卡主色
+  characterPortrait: CharacterPortrait; // 专属角色画像
+}
+
+// 用户上传的图片素材
+export interface UserImage {
+  base64: string;            // base64 数据（含 data URL 前缀）
+  description: string;       // AI 视觉分析得到的图片特征描述
 }
 
 // 应用阶段
 export type AppStage =
   | 'worldview-select'   // 选择世界观
+  | 'image-upload'       // 上传个人图片素材（可选）
   | 'quiz'               // 答题中
   | 'generating'         // AI 生成中
   | 'result'             // 结果展示

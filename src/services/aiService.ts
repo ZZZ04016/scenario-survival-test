@@ -1,4 +1,4 @@
-import type { StoryResult } from '../types';
+import type { StoryResult, UserImage } from '../types';
 import { buildStoryPrompt } from '../utils/promptBuilder';
 import type { Worldview, PersonalityProfile } from '../types';
 
@@ -6,6 +6,8 @@ export interface GenerateStoryParams {
   worldview: Worldview;
   profile: PersonalityProfile;
   answerSummary: string[];
+  userImage?: UserImage | null;
+  onProgress?: (partialText: string) => void;
 }
 
 /**
@@ -21,14 +23,18 @@ const MOCK_STORIES: Record<string, StoryResult> = {
     story: [
       '入宫第一天，你就感受到了这座紫禁城的森森寒意。同住的宫女偷走你的玉镯，你没有声张，只是默默观察——你知道，在这深宫里，冲动是活不过第一集的。',
       '皇后宫中的毒茶事件让你第一次直面后宫的险恶。你选择暗中提醒皇后，既没有得罪下毒的宠妃，也博得了皇后的一丝好感。这一步棋，你走得谨慎而聪明。',
-      '皇上注意到了你，准备晋你的位分。宠妃的警告没有吓退你，你表面推辞，私下却找皇上哭诉宠妃欺压。皇上大怒，宠妃被禁足，你顺利晋位。',
-      '你的贴身宫女竟是别人的眼线。你没有声张，而是给她传递假消息，让她的主子做出错误判断。这一招反间计，让你在后宫站稳了脚跟。',
       '最终决战，你与最大的对手正面交锋。你没有选择硬碰硬，而是布下天罗地网，等她露出破绽。一击必杀，你登上了后宫之巅。',
     ],
     ending: '你在后宫活了 68 集，最终成为母仪天下的皇后。你的谨慎与心机，让你成为了这场权力游戏的最后赢家。',
     episodesSurvived: 68,
     personalityAnalysis: '你是典型的"谨慎心机型"——不轻易出手，但出手必中。在现实中，你适合需要长期布局的工作，善于等待时机、抓住关键。但要注意，过度谨慎可能让你错过一些需要果断的机会。',
     shareColor: '#8B4513',
+    characterPortrait: {
+      name: '沈婉宁',
+      appearance: '眉目清秀，气质温婉，一双眼睛藏着洞察人心的锐利',
+      background: '六品文官之女，因家族中落被迫入宫，表面柔弱实则心思缜密',
+      personalityTags: ['谨慎隐忍', '心机深沉', '外柔内刚', '善于布局'],
+    },
   },
   apocalypse: {
     role: '你是一名普通大学生，丧尸爆发时被困在宿舍',
@@ -43,6 +49,12 @@ const MOCK_STORIES: Record<string, StoryResult> = {
     episodesSurvived: 42,
     personalityAnalysis: '你是"果断善良型"——有勇气但不冷血，有原则但不迂腐。在现实中，你适合需要领导力和决策力的岗位，你的团队会因为你而有安全感。但有时你的善良可能被人利用，要学会分辨。',
     shareColor: '#E94560',
+    characterPortrait: {
+      name: '陆远',
+      appearance: '身形矫健，眼神坚毅，脸上有一道浅浅的疤痕，透着不屈的韧劲',
+      background: '普通大学生，末世爆发后凭借果断和善良成为小队核心',
+      personalityTags: ['果断勇敢', '心地善良', '有领导力', '重情重义'],
+    },
   },
   cultivation: {
     role: '你是一个五灵根的废柴修士，被宗门分到杂役峰',
@@ -57,6 +69,12 @@ const MOCK_STORIES: Record<string, StoryResult> = {
     episodesSurvived: 75,
     personalityAnalysis: '你是"心机重情型"——为达目的可以不择手段，但内心有自己的底线。在现实中，你是天生的战略家，善于布局和隐忍。但要注意，不要为了成功失去了最重要的东西。',
     shareColor: '#2D6A4F',
+    characterPortrait: {
+      name: '叶尘',
+      appearance: '一袭青衫，眉目如画，气质出尘，眼中带着看透世事的淡然',
+      background: '五灵根废柴出身，凭借坚韧心性和过人谋略逆袭成人间最强',
+      personalityTags: ['坚韧不拔', '深谋远虑', '重情重义', '剑走偏锋'],
+    },
   },
 };
 
@@ -147,6 +165,56 @@ export class AIService {
   }
 
   /**
+   * AI 视觉分析：根据用户上传的图片生成人物特征描述
+   * 失败时返回通用描述，不阻塞主流程
+   */
+  async analyzeImage(base64Image: string): Promise<string> {
+    if (this.useMock) {
+      return '一位气质独特的年轻人，眼神中透着故事感';
+    }
+
+    try {
+      const proxyUrl = '/.netlify/functions/ai-proxy';
+      const response = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: '请用 80 字以内描述这张图片中人物的外貌特征、气质风格和给人的整体感觉。只输出描述文字，不要其他内容。',
+                },
+                { type: 'image_url', image_url: { url: base64Image } },
+              ],
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) throw new Error('视觉分析请求失败');
+
+      const data = await response.json();
+      const message = data.choices?.[0]?.message;
+      let content = '';
+      if (typeof message?.content === 'string') {
+        content = message.content;
+      } else if (Array.isArray(message?.content)) {
+        content = message.content
+          .map((part: any) => part?.text ?? part?.content ?? '')
+          .join('');
+      }
+
+      return content.trim() || '一位气质独特的年轻人，眼神中透着故事感';
+    } catch (error) {
+      console.warn('[AIService] 图片视觉分析失败，使用通用描述:', error);
+      return '一位气质独特的年轻人，眼神中透着故事感';
+    }
+  }
+
+  /**
    * Mock 模式：根据性格画像从模板库返回剧情
    */
   private async generateMockStory(
@@ -158,26 +226,30 @@ export class AIService {
   }
 
   /**
-   * 真实 API 调用（通过 Netlify 代理函数，避免浏览器 CORS 跨域问题）
+   * 真实 API 调用（流式 SSE，通过 Netlify 代理函数）
+   * 边生成边回调 onProgress，实现 3 秒内首字呈现的实时体验
    */
   private async generateRealStory(
     params: GenerateStoryParams,
   ): Promise<StoryResult> {
-    const prompt = buildStoryPrompt(params);
+    const prompt = buildStoryPrompt({
+      worldview: params.worldview,
+      profile: params.profile,
+      answerSummary: params.answerSummary,
+      imageDescription: params.userImage?.description,
+    });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
-      // 优先使用 Netlify 代理函数（同域，无 CORS 问题）
       const proxyUrl = '/.netlify/functions/ai-proxy';
       const response = await fetch(proxyUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [{ role: 'user', content: prompt }],
+          stream: true,
         }),
         signal: controller.signal,
       });
@@ -185,24 +257,45 @@ export class AIService {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const errorMsg =
-          errorData?.message ||
-          this.getErrorMessage(response.status, '');
+          errorData?.message || this.getErrorMessage(response.status, '');
         throw new Error(errorMsg);
       }
 
-      const data = await response.json();
+      // 流式读取 SSE 响应
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let content = '';
+      let buffer = '';
 
-      // 兼容不同模型的 content 格式（字符串或数组）
-      const message = data.choices?.[0]?.message;
-      let content: string | undefined;
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-      if (typeof message?.content === 'string') {
-        content = message.content;
-      } else if (Array.isArray(message?.content)) {
-        // 新模型可能返回 [{ type: 'text', text: '...' }] 格式
-        content = message.content
-          .map((part: any) => part?.text ?? part?.content ?? '')
-          .join('');
+          buffer += decoder.decode(value, { stream: true });
+
+          // 按行解析 SSE（每行格式: data: {...}）
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // 保留未完成的行
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith('data:')) continue;
+            const jsonStr = trimmed.slice(5).trim();
+            if (jsonStr === '[DONE]') continue;
+
+            try {
+              const chunk = JSON.parse(jsonStr);
+              const delta = chunk.choices?.[0]?.delta?.content;
+              if (delta) {
+                content += delta;
+                params.onProgress?.(content);
+              }
+            } catch {
+              // 忽略无法解析的 chunk
+            }
+          }
+        }
       }
 
       if (!content || content.trim().length === 0) {
@@ -239,6 +332,35 @@ export class AIService {
   }
 
   /**
+   * 解析角色画像（兼容缺失字段）
+   */
+  private parseCharacterPortrait(data: any): {
+    name: string;
+    appearance: string;
+    background: string;
+    personalityTags: string[];
+  } {
+    if (!data || typeof data !== 'object') {
+      return {
+        name: '无名之人',
+        appearance: '气质神秘，令人难以捉摸',
+        background: '身世成谜的旅人',
+        personalityTags: ['神秘莫测'],
+      };
+    }
+    return {
+      name: data.name || '无名之人',
+      appearance: data.appearance || '气质神秘，令人难以捉摸',
+      background: data.background || '身世成谜的旅人',
+      personalityTags: Array.isArray(data.personalityTags)
+        ? data.personalityTags
+        : typeof data.personalityTags === 'string'
+          ? data.personalityTags.split(/[,，、]/).map((t: string) => t.trim()).filter(Boolean)
+          : ['独一无二'],
+    };
+  }
+
+  /**
    * 解析 AI 返回的 JSON（兼容 markdown 代码块、多余文字等情况）
    */
   private parseStoryResponse(content: string): StoryResult {
@@ -251,6 +373,7 @@ export class AIService {
         episodesSurvived: Number(parsed.episodesSurvived) || 1,
         personalityAnalysis: parsed.personalityAnalysis ?? '',
         shareColor: parsed.shareColor ?? '#c87a35',
+        characterPortrait: this.parseCharacterPortrait(parsed.characterPortrait),
       };
     } catch {
       // 尝试去除 markdown 代码块标记
@@ -269,6 +392,7 @@ export class AIService {
           episodesSurvived: Number(parsed.episodesSurvived) || 1,
           personalityAnalysis: parsed.personalityAnalysis ?? '',
           shareColor: parsed.shareColor ?? '#c87a35',
+          characterPortrait: this.parseCharacterPortrait(parsed.characterPortrait),
         };
       } catch {
         // 尝试提取第一个 JSON 对象
@@ -283,6 +407,7 @@ export class AIService {
               episodesSurvived: Number(parsed.episodesSurvived) || 1,
               personalityAnalysis: parsed.personalityAnalysis ?? '',
               shareColor: parsed.shareColor ?? '#c87a35',
+              characterPortrait: this.parseCharacterPortrait(parsed.characterPortrait),
             };
           } catch {
             // 最后尝试：修复常见 JSON 格式问题（单引号转双引号、尾逗号等）
@@ -298,6 +423,7 @@ export class AIService {
                 episodesSurvived: Number(parsed.episodesSurvived) || 1,
                 personalityAnalysis: parsed.personalityAnalysis ?? '',
                 shareColor: parsed.shareColor ?? '#c87a35',
+                characterPortrait: this.parseCharacterPortrait(parsed.characterPortrait),
               };
             } catch {
               throw new Error('AI 返回格式错误，无法解析为 JSON');

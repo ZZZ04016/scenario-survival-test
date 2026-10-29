@@ -4,14 +4,18 @@ import type {
   PersonalityProfile,
   PriceTier,
   QuizOption,
+  QuizQuestion,
   StoryResult,
+  UserImage,
   Worldview,
   WorldviewId,
 } from '../types';
-import { getQuestions } from '../data/questions';
+import { getQuestions, selectNextQuestion } from '../data/questions';
 import { calculatePersonalityProfile } from '../utils/personality';
 import { getAIService } from '../services/aiService';
 import { saveTestResult } from '../lib/storage';
+
+const TOTAL_QUESTIONS = 10;
 
 interface AppState {
   // 应用状态
@@ -19,20 +23,27 @@ interface AppState {
   worldview: Worldview | null;
   tier: PriceTier;
 
-  // 答题状态
+  // 答题状态（动态分支）
+  questionSequence: QuizQuestion[]; // 已展示的题目序列
   currentQuestionIndex: number;
   selectedOptions: QuizOption[];
+
+  // 用户上传图片
+  userImage: UserImage | null;
 
   // 结果
   profile: PersonalityProfile | null;
   story: StoryResult | null;
   isGenerating: boolean;
   error: string | null;
+  streamingText: string; // AI 流式输出的部分文本（用于 3 秒感知）
 
   // Actions
   setStage: (stage: AppStage) => void;
   selectWorldview: (worldview: Worldview) => void;
   setTier: (tier: PriceTier) => void;
+  setUserImage: (image: UserImage | null) => void;
+  startQuiz: () => void;
   selectOption: (option: QuizOption) => void;
   goToNextQuestion: () => void;
   goToPrevQuestion: () => void;
@@ -45,22 +56,29 @@ export const useAppStore = create<AppState>((set, get) => ({
   worldview: null,
   tier: 'full',
 
+  questionSequence: [],
   currentQuestionIndex: 0,
   selectedOptions: [],
+
+  userImage: null,
 
   profile: null,
   story: null,
   isGenerating: false,
   error: null,
+  streamingText: '',
 
   setStage: (stage) => set({ stage }),
 
   selectWorldview: (worldview) => {
+    // 进入图片上传阶段（可选），再开始答题
     set({
       worldview,
-      stage: 'quiz',
+      stage: 'image-upload',
+      questionSequence: [],
       currentQuestionIndex: 0,
       selectedOptions: [],
+      userImage: null,
       profile: null,
       story: null,
       error: null,
@@ -68,6 +86,22 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setTier: (tier) => set({ tier }),
+
+  setUserImage: (image) => set({ userImage: image }),
+
+  startQuiz: () => {
+    const { worldview } = get();
+    if (!worldview) return;
+    // 从题库随机选第一道题
+    const pool = getQuestions(worldview.id as WorldviewId);
+    const firstQuestion = pool[Math.floor(Math.random() * pool.length)];
+    set({
+      questionSequence: [firstQuestion],
+      currentQuestionIndex: 0,
+      selectedOptions: [],
+      stage: 'quiz',
+    });
+  },
 
   selectOption: (option) => {
     const { currentQuestionIndex, selectedOptions } = get();
@@ -77,18 +111,34 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   goToNextQuestion: () => {
-    const { worldview, currentQuestionIndex, selectedOptions } = get();
+    const { worldview, currentQuestionIndex, selectedOptions, questionSequence } = get();
     if (!worldview) return;
 
-    const questions = getQuestions(worldview.id as WorldviewId);
-    // 体验版只显示前 5 题
-    const totalQuestions = get().tier === 'trial' ? 5 : questions.length;
+    const answeredCount = currentQuestionIndex + 1;
 
-    if (currentQuestionIndex < totalQuestions - 1) {
-      set({ currentQuestionIndex: currentQuestionIndex + 1 });
+    if (answeredCount < TOTAL_QUESTIONS) {
+      // 动态选择下一道题
+      const pool = getQuestions(worldview.id as WorldviewId);
+      const answeredIds = questionSequence.map((q) => q.id);
+      // 用已选选项的特质来决定下一题
+      const nextQuestion = selectNextQuestion(pool, answeredIds, selectedOptions.slice(0, answeredCount));
+
+      if (nextQuestion) {
+        set({
+          questionSequence: [...questionSequence, nextQuestion],
+          currentQuestionIndex: currentQuestionIndex + 1,
+        });
+      } else {
+        // 题库用完，进入生成阶段
+        finishQuiz();
+      }
     } else {
-      // 答题完成，计算性格画像
-      const profile = calculatePersonalityProfile(selectedOptions.slice(0, totalQuestions));
+      // 答完所有题目
+      finishQuiz();
+    }
+
+    function finishQuiz() {
+      const profile = calculatePersonalityProfile(selectedOptions.slice(0, TOTAL_QUESTIONS));
       set({ profile, stage: 'generating' });
     }
   },
@@ -101,28 +151,24 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   generateStory: async () => {
-    const { worldview, profile, selectedOptions, tier } = get();
+    const { worldview, profile, selectedOptions, questionSequence, userImage } = get();
     if (!worldview || !profile) return;
 
-    set({ isGenerating: true, error: null, stage: 'generating' });
+    set({ isGenerating: true, error: null, stage: 'generating', streamingText: '' });
 
     try {
-      const questions = getQuestions(worldview.id as WorldviewId);
-      const totalQuestions = tier === 'trial' ? 5 : questions.length;
-      const usedQuestions = questions.slice(0, totalQuestions);
-
-      const answerSummary = selectedOptions.slice(0, totalQuestions).map(
-        (option, i) => {
-          const question = usedQuestions[i];
-          return `面对"${question?.text}"，你选择了"${option.text}"`;
-        },
-      );
+      const answerSummary = selectedOptions.slice(0, TOTAL_QUESTIONS).map((option, i) => {
+        const question = questionSequence[i];
+        return `面对"${question?.text}"，你选择了"${option.text}"`;
+      });
 
       const aiService = getAIService();
       const story = await aiService.generateStory({
         worldview,
         profile,
         answerSummary,
+        userImage,
+        onProgress: (text) => set({ streamingText: text }),
       });
 
       set({ story, stage: 'result', isGenerating: false });
@@ -143,11 +189,14 @@ export const useAppStore = create<AppState>((set, get) => ({
       stage: 'worldview-select',
       worldview: null,
       tier: 'full',
+      questionSequence: [],
       currentQuestionIndex: 0,
       selectedOptions: [],
+      userImage: null,
       profile: null,
       story: null,
       isGenerating: false,
       error: null,
+      streamingText: '',
     }),
 }));

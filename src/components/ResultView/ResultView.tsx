@@ -80,7 +80,7 @@ export function ResultView() {
           </div>
         </div>
 
-        {/* 角色设定 */}
+        {/* 专属角色画像 */}
         <div
           className="card p-5 mb-5 animate-slide-up"
           style={{
@@ -88,8 +88,51 @@ export function ResultView() {
             borderLeft: '4px solid var(--color-primary)',
           }}
         >
-          <p className="text-sm font-bold mb-1" style={{ color: 'var(--color-primary)' }}>👤 你的身份</p>
-          <p className="text-text leading-relaxed">{story.role}</p>
+          <p className="text-sm font-bold mb-3" style={{ color: 'var(--color-primary)' }}>🎭 你的专属角色画像</p>
+
+          {/* 角色名 */}
+          <div className="flex items-center gap-3 mb-4">
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center text-2xl flex-shrink-0"
+              style={{
+                background: `linear-gradient(135deg, var(--color-primary), var(--color-accent))`,
+                color: 'var(--color-btn-text)',
+              }}
+            >
+              {story.characterPortrait.name.charAt(0)}
+            </div>
+            <div>
+              <p className="text-lg font-bold text-text">{story.characterPortrait.name}</p>
+              <p className="text-sm text-text-secondary">{story.role}</p>
+            </div>
+          </div>
+
+          {/* 外貌 + 背景 */}
+          <div className="space-y-2 mb-4">
+            <p className="text-sm text-text-secondary leading-relaxed">
+              <span className="font-medium text-text">外貌：</span>{story.characterPortrait.appearance}
+            </p>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              <span className="font-medium text-text">背景：</span>{story.characterPortrait.background}
+            </p>
+          </div>
+
+          {/* 性格标签 */}
+          <div className="flex flex-wrap gap-2">
+            {story.characterPortrait.personalityTags.map((tag, i) => (
+              <span
+                key={i}
+                className="px-2.5 py-1 rounded-full text-xs font-medium"
+                style={{
+                  background: 'var(--color-primary-light)33',
+                  color: 'var(--color-primary)',
+                  border: '1px solid var(--color-primary-light)',
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* 剧情 */}
