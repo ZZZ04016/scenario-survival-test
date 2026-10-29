@@ -133,24 +133,22 @@ export function ResultView() {
         {/* 排行榜 */}
         {worldview && <Leaderboard worldviewId={worldview.id} />}
 
-        {/* 升级提示（体验版） */}
-        {tier === 'trial' && (
-          <div
-            className="card p-6 mb-6 text-center animate-slide-up"
-            style={{
-              background: 'linear-gradient(135deg, var(--color-primary)15, var(--color-accent)15)',
-              border: '2px dashed var(--color-primary-light)',
-              animationDelay: '0.35s',
-            }}
-          >
-            <div className="text-3xl mb-2">🎁</div>
-            <p className="font-bold mb-2 text-lg" style={{ color: 'var(--color-primary)' }}>解锁完整剧情</p>
-            <p className="text-sm text-text-secondary mb-4">
-              10 道题完整剧情、多结局分支和深度性格分析
-            </p>
-            <button className="btn-primary animate-pulse-glow">立即解锁 ¥1.98</button>
-          </div>
-        )}
+        {/* 付费解锁提示 */}
+        <div
+          className="card p-6 mb-6 text-center animate-slide-up"
+          style={{
+            background: 'linear-gradient(135deg, var(--color-primary)15, var(--color-accent)15)',
+            border: '2px dashed var(--color-primary-light)',
+            animationDelay: '0.35s',
+          }}
+        >
+          <div className="text-3xl mb-2">🎁</div>
+          <p className="font-bold mb-2 text-lg" style={{ color: 'var(--color-primary)' }}>支持一下创作者</p>
+          <p className="text-sm text-text-secondary mb-4">
+            一杯奶茶钱，解锁所有世界观、专属剧情和深度性格分析
+          </p>
+          <button className="btn-primary animate-pulse-glow">立即支持 ¥1.98</button>
+        </div>
 
         {/* 操作按钮 */}
         <div className="flex gap-3 animate-slide-up" style={{ animationDelay: '0.4s' }}>
