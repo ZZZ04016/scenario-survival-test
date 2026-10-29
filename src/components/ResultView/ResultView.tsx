@@ -23,7 +23,17 @@ function useCountUp(target: number, duration = 1200) {
 }
 
 export function ResultView() {
-  const { worldview, story, profile, reset, setStage } = useAppStore();
+  const {
+    worldview,
+    story,
+    profile,
+    reset,
+    setStage,
+    characterImage,
+    isGeneratingImage,
+    imageError,
+    generateCharacterImage,
+  } = useAppStore();
   const displayEpisodes = useCountUp(story?.episodesSurvived ?? 0);
 
   if (!story || !profile) return null;
@@ -133,6 +143,69 @@ export function ResultView() {
               </span>
             ))}
           </div>
+        </div>
+
+        {/* 专属角色图片生成 */}
+        <div
+          className="card p-5 mb-5 animate-slide-up"
+          style={{
+            background: `linear-gradient(135deg, var(--color-accent)15, var(--color-card-bg))`,
+            borderLeft: '4px solid var(--color-accent)',
+            animationDelay: '0.05s',
+          }}
+        >
+          <p className="text-sm font-bold mb-3" style={{ color: 'var(--color-accent)' }}>🖼️ 你的专属角色形象</p>
+
+          {characterImage ? (
+            <div className="space-y-3">
+              <img
+                src={characterImage}
+                alt={`${story.characterPortrait.name} 的角色形象`}
+                className="w-full rounded-lg shadow-lg"
+                style={{ aspectRatio: '3/4', objectFit: 'cover' }}
+              />
+              <button
+                onClick={generateCharacterImage}
+                disabled={isGeneratingImage}
+                className="btn-secondary w-full text-sm disabled:opacity-50"
+              >
+                {isGeneratingImage ? '🎨 重新生成中...' : '🔄 重新生成角色图片'}
+              </button>
+            </div>
+          ) : isGeneratingImage ? (
+            <div className="flex flex-col items-center justify-center py-10">
+              <div className="relative w-16 h-16 mb-4">
+                <div
+                  className="absolute inset-0 rounded-full border-4 border-transparent animate-spin"
+                  style={{ borderTopColor: 'var(--color-accent)', borderRightColor: 'var(--color-accent)' }}
+                />
+                <div
+                  className="absolute inset-2 rounded-full border-4 border-transparent animate-spin"
+                  style={{ borderBottomColor: 'var(--color-primary)', animationDirection: 'reverse', animationDuration: '1.2s' }}
+                />
+              </div>
+              <p className="text-text-secondary text-sm">🎨 AI 正在为你绘制专属角色形象...</p>
+              <p className="text-text-muted text-xs mt-1">结合你的外貌特征和角色设定，约需 10-30 秒</p>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <div className="text-5xl mb-3">🎨</div>
+              <p className="text-text-secondary text-sm mb-4">
+                点击下方按钮，AI 将结合你的外貌特征和角色设定<br />
+                为你生成一张专属的角色形象图片
+              </p>
+              {imageError && (
+                <p className="text-sm mb-3" style={{ color: '#e94560' }}>{imageError}</p>
+              )}
+              <button
+                onClick={generateCharacterImage}
+                disabled={isGeneratingImage}
+                className="btn-primary disabled:opacity-50"
+              >
+                {isGeneratingImage ? '生成中...' : '✨ 生成我的角色图片'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* 剧情 */}

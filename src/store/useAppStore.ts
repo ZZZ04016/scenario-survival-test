@@ -38,6 +38,11 @@ interface AppState {
   error: string | null;
   streamingText: string; // AI 流式输出的部分文本（用于 3 秒感知）
 
+  // 角色图片生成
+  characterImage: string | null; // 生成的角色图片 URL
+  isGeneratingImage: boolean;
+  imageError: string | null;
+
   // Actions
   setStage: (stage: AppStage) => void;
   selectWorldview: (worldview: Worldview) => void;
@@ -48,6 +53,7 @@ interface AppState {
   goToNextQuestion: () => void;
   goToPrevQuestion: () => void;
   generateStory: () => Promise<void>;
+  generateCharacterImage: () => Promise<void>;
   reset: () => void;
 }
 
@@ -67,6 +73,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   isGenerating: false,
   error: null,
   streamingText: '',
+
+  characterImage: null,
+  isGeneratingImage: false,
+  imageError: null,
 
   setStage: (stage) => set({ stage }),
 
@@ -184,6 +194,28 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
+  generateCharacterImage: async () => {
+    const { worldview, story, userImage } = get();
+    if (!worldview || !story) return;
+
+    set({ isGeneratingImage: true, imageError: null });
+
+    try {
+      const aiService = getAIService();
+      const imageUrl = await aiService.generateCharacterImage({
+        worldview,
+        characterPortrait: story.characterPortrait,
+        userImage,
+      });
+      set({ characterImage: imageUrl, isGeneratingImage: false });
+    } catch (error) {
+      set({
+        imageError: error instanceof Error ? error.message : '图片生成失败，请重试',
+        isGeneratingImage: false,
+      });
+    }
+  },
+
   reset: () =>
     set({
       stage: 'worldview-select',
@@ -198,5 +230,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       isGenerating: false,
       error: null,
       streamingText: '',
+      characterImage: null,
+      isGeneratingImage: false,
+      imageError: null,
     }),
 }));

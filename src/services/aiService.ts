@@ -1,6 +1,6 @@
-import type { StoryResult, UserImage } from '../types';
-import { buildStoryPrompt } from '../utils/promptBuilder';
-import type { Worldview, PersonalityProfile } from '../types';
+import type { StoryResult, UserImage, Worldview } from '../types';
+import { buildStoryPrompt, buildImagePrompt } from '../utils/promptBuilder';
+import type { PersonalityProfile } from '../types';
 
 export interface GenerateStoryParams {
   worldview: Worldview;
@@ -211,6 +211,42 @@ export class AIService {
     } catch (error) {
       console.warn('[AIService] 图片视觉分析失败，使用通用描述:', error);
       return '一位气质独特的年轻人，眼神中透着故事感';
+    }
+  }
+
+  /**
+   * 生成专属角色图片
+   * 结合用户外貌特征 + 角色画像 + 世界观场景，调用 Pollinations.ai 生成图片
+   * 返回图片的 object URL（可直接用于 <img src>）
+   */
+  async generateCharacterImage(params: {
+    worldview: Worldview;
+    characterPortrait: StoryResult['characterPortrait'];
+    userImage?: UserImage | null;
+  }): Promise<string> {
+    const prompt = buildImagePrompt({
+      worldview: params.worldview,
+      characterPortrait: params.characterPortrait,
+      userImage: params.userImage,
+    });
+
+    // 随机种子，确保每次生成略有不同
+    const seed = Math.floor(Math.random() * 1000000);
+    const encodedPrompt = encodeURIComponent(prompt);
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=768&nologo=true&seed=${seed}`;
+
+    try {
+      // fetch 图片，确认生成成功后转成 object URL
+      const response = await fetch(imageUrl);
+      if (!response.ok) {
+        throw new Error(`图片生成失败 (${response.status})`);
+      }
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.warn('[AIService] 角色图片生成失败:', error);
+      // 失败时返回原始 URL，让浏览器直接尝试加载
+      return imageUrl;
     }
   }
 

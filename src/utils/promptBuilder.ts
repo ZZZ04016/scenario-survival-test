@@ -1,4 +1,4 @@
-import type { PersonalityProfile, Worldview } from '../types';
+import type { CharacterPortrait, PersonalityProfile, UserImage, Worldview } from '../types';
 import { TRAIT_LABELS } from '../types';
 
 interface BuildPromptParams {
@@ -109,3 +109,94 @@ ${answerSummary.map((s, i) => `${i + 1}. ${s}`).join('\n')}
   }
 }`;
 }
+
+// 世界观对应的图片场景、服装、氛围映射
+const WORLDVIEW_IMAGE_MAP: Record<string, {
+  scene: string;        // 场景背景
+  costume: string;      // 服装风格
+  atmosphere: string;   // 氛围光影
+  style: string;        // 画风
+}> = {
+  palace: {
+    scene: 'ancient Chinese imperial palace, ornate halls, red pillars, golden decorations, silk curtains',
+    costume: 'elaborate traditional Chinese hanfu, imperial concubine robe, silk fabrics, jade ornaments, intricate embroidery',
+    atmosphere: 'soft golden lighting, dramatic shadows, luxurious atmosphere, warm color palette',
+    style: 'cinematic, photorealistic, high detail, 8k, professional portrait photography',
+  },
+  apocalypse: {
+    scene: 'post-apocalyptic ruins, abandoned city, broken buildings, debris, overcast sky, dust particles',
+    costume: 'worn tactical clothing, torn jacket, rugged survival gear, dusty and weathered look',
+    atmosphere: 'harsh daylight, desaturated colors, gritty atmosphere, dramatic side lighting',
+    style: 'cinematic, photorealistic, high detail, 8k, gritty realism',
+  },
+  cultivation: {
+    scene: 'misty mountain peaks, ancient Chinese cultivation sect, floating clouds, pine trees, traditional architecture',
+    costume: 'flowing immortal robes, celestial silk garments, jade accessories, ethereal and elegant style',
+    atmosphere: 'ethereal misty lighting, soft volumetric light, cool blue-green palette, magical atmosphere',
+    style: 'cinematic, photorealistic, high detail, 8k, fantasy art',
+  },
+};
+
+interface BuildImagePromptParams {
+  worldview: Worldview;
+  characterPortrait: CharacterPortrait;
+  userImage?: UserImage | null;
+}
+
+/**
+ * 构建图片生成 Prompt（英文，适合 Pollinations.ai 等图片生成模型）
+ * 结合用户外貌特征 + 角色画像 + 世界观场景，生成高度定制化的角色图片描述
+ */
+export function buildImagePrompt({
+  worldview,
+  characterPortrait,
+  userImage,
+}: BuildImagePromptParams): string {
+  const imgCfg = WORLDVIEW_IMAGE_MAP[worldview.id] ?? WORLDVIEW_IMAGE_MAP.cultivation;
+
+  // 用户外貌特征（从照片分析得出，用于保留辨识度）
+  const userFeatures = userImage?.description
+    ? `facial features: ${userImage.description}. `
+    : '';
+
+  // 角色外貌描述
+  const charAppearance = characterPortrait.appearance || 'elegant and distinctive appearance';
+
+  // 性格标签转换为神态描述
+  const moodMap: Record<string, string> = {
+    '谨慎隐忍': 'calm and composed expression',
+    '果断强势': 'confident and determined expression',
+    '心机深沉': 'calculating and mysterious gaze',
+    '善良单纯': 'gentle and kind expression',
+    '野心勃勃': 'ambitious and intense gaze',
+    '重情重义': 'loyal and warm expression',
+    '坚韧不拔': 'resolute and unyielding expression',
+    '深谋远虑': 'thoughtful and strategic gaze',
+    '外柔内刚': 'soft exterior with inner strength',
+    '善于布局': 'scheming and intelligent look',
+    '果断勇敢': 'bold and courageous expression',
+    '心地善良': 'kind-hearted and warm',
+    '有领导力': 'commanding and authoritative presence',
+    '剑走偏锋': 'unconventional and sharp gaze',
+  };
+
+  const moodTags = characterPortrait.personalityTags
+    .map((tag) => moodMap[tag])
+    .filter(Boolean)
+    .join(', ');
+
+  const prompt = [
+    `photorealistic portrait of ${characterPortrait.name}, a character in ${worldview.name} world.`,
+    `${userFeatures}`,
+    `Appearance: ${charAppearance}.`,
+    `Costume: ${imgCfg.costume}.`,
+    `Scene: ${imgCfg.scene}.`,
+    `Mood: ${moodTags || 'compelling and expressive look'}.`,
+    `Background: ${imgCfg.atmosphere}.`,
+    `Style: ${imgCfg.style}.`,
+    `The character should look like a real person with detailed facial features, natural skin texture, expressive eyes, and lifelike presence.`,
+  ].join(' ');
+
+  return prompt;
+}
+
