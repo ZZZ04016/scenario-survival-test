@@ -144,11 +144,11 @@ export function ResultView() {
             }}
           >
             <div className="text-3xl mb-2">🎁</div>
-            <p className="font-bold mb-2 text-lg" style={{ color: 'var(--color-primary)' }}>这只是体验版剧情</p>
+            <p className="font-bold mb-2 text-lg" style={{ color: 'var(--color-primary)' }}>解锁完整剧情</p>
             <p className="text-sm text-text-secondary mb-4">
-              升级完整版可获得 10 道题的完整剧情、多结局分支和深度性格分析
+              10 道题完整剧情、多结局分支和深度性格分析
             </p>
-            <button className="btn-primary animate-pulse-glow">解锁完整版 ¥9.9</button>
+            <button className="btn-primary animate-pulse-glow">立即解锁 ¥1.98</button>
           </div>
         )}
 

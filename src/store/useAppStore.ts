@@ -43,7 +43,7 @@ interface AppState {
 export const useAppStore = create<AppState>((set, get) => ({
   stage: 'worldview-select',
   worldview: null,
-  tier: 'trial',
+  tier: 'full',
 
   currentQuestionIndex: 0,
   selectedOptions: [],
@@ -125,11 +125,6 @@ export const useAppStore = create<AppState>((set, get) => ({
         answerSummary,
       });
 
-      // 体验版用计算的集数覆盖 AI 返回的
-      if (tier === 'trial') {
-        story.episodesSurvived = calculateEpisodesSurvived(profile);
-      }
-
       set({ story, stage: 'result', isGenerating: false });
 
       // 异步上报测试结果到 Supabase（不阻塞 UI，失败也不影响）
@@ -147,7 +142,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       stage: 'worldview-select',
       worldview: null,
-      tier: 'trial',
+      tier: 'full',
       currentQuestionIndex: 0,
       selectedOptions: [],
       profile: null,
