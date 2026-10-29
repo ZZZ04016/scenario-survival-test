@@ -9,7 +9,7 @@ import type {
   WorldviewId,
 } from '../types';
 import { getQuestions } from '../data/questions';
-import { calculatePersonalityProfile, calculateEpisodesSurvived } from '../utils/personality';
+import { calculatePersonalityProfile } from '../utils/personality';
 import { getAIService } from '../services/aiService';
 import { saveTestResult } from '../lib/storage';
 
