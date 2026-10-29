@@ -42,6 +42,7 @@ interface AppState {
   characterImage: string | null; // 生成的角色图片 URL
   isGeneratingImage: boolean;
   imageError: string | null;
+  imageRetryAfter: number | null; // 限流时可重试的时间戳（毫秒）
 
   // Actions
   setStage: (stage: AppStage) => void;
@@ -77,6 +78,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   characterImage: null,
   isGeneratingImage: false,
   imageError: null,
+  imageRetryAfter: null,
 
   setStage: (stage) => set({ stage }),
 
@@ -198,7 +200,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { worldview, story, userImage } = get();
     if (!worldview || !story) return;
 
-    set({ isGeneratingImage: true, imageError: null });
+    set({ isGeneratingImage: true, imageError: null, imageRetryAfter: null });
 
     try {
       const aiService = getAIService();
@@ -209,9 +211,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       });
       set({ characterImage: imageUrl, isGeneratingImage: false });
     } catch (error) {
+      const retryAfter = (error as Error & { retryAfter?: number })?.retryAfter;
       set({
         imageError: error instanceof Error ? error.message : '图片生成失败，请重试',
         isGeneratingImage: false,
+        imageRetryAfter: retryAfter ? Date.now() + retryAfter * 1000 : null,
       });
     }
   },
@@ -233,5 +237,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       characterImage: null,
       isGeneratingImage: false,
       imageError: null,
+      imageRetryAfter: null,
     }),
 }));

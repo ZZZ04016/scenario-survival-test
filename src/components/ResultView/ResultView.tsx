@@ -22,6 +22,34 @@ function useCountUp(target: number, duration = 1200) {
   return value;
 }
 
+/**
+ * 倒计时 Hook：根据目标时间戳返回剩余秒数，倒计时结束时触发 onComplete
+ */
+function useCountdown(targetTime: number | null, onComplete?: () => void) {
+  const [remaining, setRemaining] = useState(0);
+
+  useEffect(() => {
+    if (!targetTime) {
+      setRemaining(0);
+      return;
+    }
+
+    const update = () => {
+      const diff = Math.max(0, Math.ceil((targetTime - Date.now()) / 1000));
+      setRemaining(diff);
+      if (diff <= 0) {
+        onComplete?.();
+      }
+    };
+
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [targetTime, onComplete]);
+
+  return remaining;
+}
+
 export function ResultView() {
   const {
     worldview,
@@ -32,9 +60,17 @@ export function ResultView() {
     characterImage,
     isGeneratingImage,
     imageError,
+    imageRetryAfter,
     generateCharacterImage,
   } = useAppStore();
   const displayEpisodes = useCountUp(story?.episodesSurvived ?? 0);
+
+  // 限流倒计时，归零后自动重试
+  const retryCountdown = useCountdown(imageRetryAfter, () => {
+    if (imageRetryAfter && !characterImage && !isGeneratingImage) {
+      generateCharacterImage();
+    }
+  });
 
   if (!story || !profile) return null;
 
@@ -164,12 +200,20 @@ export function ResultView() {
                 className="w-full rounded-lg shadow-lg"
                 style={{ aspectRatio: '3/4', objectFit: 'cover' }}
               />
+              {imageError && (
+                <div className="text-center">
+                  <p className="text-sm" style={{ color: '#e94560' }}>{imageError}</p>
+                  {imageRetryAfter && retryCountdown > 0 && (
+                    <p className="text-xs text-text-muted mt-1">⏳ {retryCountdown} 秒后自动重试...</p>
+                  )}
+                </div>
+              )}
               <button
                 onClick={generateCharacterImage}
-                disabled={isGeneratingImage}
+                disabled={isGeneratingImage || (imageRetryAfter !== null && retryCountdown > 0)}
                 className="btn-secondary w-full text-sm disabled:opacity-50"
               >
-                {isGeneratingImage ? '🎨 重新生成中...' : '🔄 重新生成角色图片'}
+                {isGeneratingImage ? '🎨 重新生成中...' : imageRetryAfter && retryCountdown > 0 ? `⏳ 等待 ${retryCountdown}s` : '🔄 重新生成角色图片'}
               </button>
             </div>
           ) : isGeneratingImage ? (
@@ -195,14 +239,21 @@ export function ResultView() {
                 为你生成一张专属的角色形象图片
               </p>
               {imageError && (
-                <p className="text-sm mb-3" style={{ color: '#e94560' }}>{imageError}</p>
+                <div className="mb-3">
+                  <p className="text-sm" style={{ color: '#e94560' }}>{imageError}</p>
+                  {imageRetryAfter && retryCountdown > 0 && (
+                    <p className="text-xs text-text-muted mt-1">
+                      ⏳ {retryCountdown} 秒后自动重试...
+                    </p>
+                  )}
+                </div>
               )}
               <button
                 onClick={generateCharacterImage}
-                disabled={isGeneratingImage}
+                disabled={isGeneratingImage || (imageRetryAfter !== null && retryCountdown > 0)}
                 className="btn-primary disabled:opacity-50"
               >
-                {isGeneratingImage ? '生成中...' : '✨ 生成我的角色图片'}
+                {isGeneratingImage ? '生成中...' : imageRetryAfter && retryCountdown > 0 ? `⏳ 等待 ${retryCountdown}s` : '✨ 生成我的角色图片'}
               </button>
             </div>
           )}

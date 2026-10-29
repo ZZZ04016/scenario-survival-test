@@ -218,6 +218,7 @@ export class AIService {
    * 生成专属角色图片
    * 结合用户外貌特征 + 角色画像 + 世界观场景，调用 Pollinations.ai 生成图片
    * 返回图片的 object URL（可直接用于 <img src>）
+   * 失败时抛出带 retryAfter 秒数的错误，供 UI 显示倒计时
    */
   async generateCharacterImage(params: {
     worldview: Worldview;
@@ -235,19 +236,24 @@ export class AIService {
     const encodedPrompt = encodeURIComponent(prompt);
     const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=768&nologo=true&seed=${seed}`;
 
-    try {
-      // fetch 图片，确认生成成功后转成 object URL
-      const response = await fetch(imageUrl);
-      if (!response.ok) {
-        throw new Error(`图片生成失败 (${response.status})`);
+    const response = await fetch(imageUrl);
+
+    if (!response.ok) {
+      // 检查 Pollinations 的限流响应头
+      const retryAfter = response.headers.get('retry-after');
+      const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : null;
+
+      if (response.status === 402 || response.status === 503) {
+        const wait = retrySeconds ?? 45;
+        const error = new Error(`免费额度已用完，请等待 ${wait} 秒后重试`) as Error & { retryAfter: number };
+        error.retryAfter = wait;
+        throw error;
       }
-      const blob = await response.blob();
-      return URL.createObjectURL(blob);
-    } catch (error) {
-      console.warn('[AIService] 角色图片生成失败:', error);
-      // 失败时返回原始 URL，让浏览器直接尝试加载
-      return imageUrl;
+      throw new Error(`图片生成失败 (${response.status})`);
     }
+
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
   }
 
   /**
