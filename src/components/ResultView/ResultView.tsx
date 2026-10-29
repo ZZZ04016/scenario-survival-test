@@ -23,7 +23,7 @@ function useCountUp(target: number, duration = 1200) {
 }
 
 export function ResultView() {
-  const { worldview, story, profile, tier, reset, setStage } = useAppStore();
+  const { worldview, story, profile, reset, setStage } = useAppStore();
   const displayEpisodes = useCountUp(story?.episodesSurvived ?? 0);
 
   if (!story || !profile) return null;
