@@ -5,6 +5,7 @@ import { ImageUploadView } from './components/ImageUploadView/ImageUploadView';
 import { QuizView } from './components/QuizView/QuizView';
 import { GeneratingView } from './components/GeneratingView/GeneratingView';
 import { ResultView } from './components/ResultView/ResultView';
+import { useNetworkStatus } from './hooks/useNetworkStatus';
 
 const THEME_CLASS_MAP: Record<string, string> = {
   palace: 'theme-palace',
@@ -14,6 +15,7 @@ const THEME_CLASS_MAP: Record<string, string> = {
 
 function App() {
   const { stage, worldview, generateStory } = useAppStore();
+  const online = useNetworkStatus();
 
   // 根据世界观切换主题（首页用默认主题）
   useEffect(() => {
@@ -41,6 +43,15 @@ function App() {
 
   return (
     <div className="min-h-screen">
+      {/* 离线状态指示器 */}
+      {!online && (
+        <div
+          className="fixed top-0 left-0 right-0 z-50 py-2 px-4 text-center text-sm font-medium"
+          style={{ backgroundColor: '#e67e22', color: '#fff' }}
+        >
+          📴 离线模式 — 所有功能仍可正常使用（剧情与图片将使用本地生成）
+        </div>
+      )}
       {stage === 'worldview-select' && <WorldviewSelector />}
       {stage === 'image-upload' && <ImageUploadView />}
       {stage === 'quiz' && <QuizView />}

@@ -1,6 +1,7 @@
 import type { StoryResult, UserImage, Worldview } from '../types';
 import { buildStoryPrompt, buildImagePrompt } from '../utils/promptBuilder';
 import type { PersonalityProfile } from '../types';
+import { generateOfflineCharacterImage, isOnline } from './offlineImageService';
 
 export interface GenerateStoryParams {
   worldview: Worldview;
@@ -216,15 +217,20 @@ export class AIService {
 
   /**
    * 生成专属角色图片
-   * 结合用户外貌特征 + 角色画像 + 世界观场景，调用 Pollinations.ai 生成图片
-   * 返回图片的 object URL（可直接用于 <img src>）
-   * 失败时抛出带 retryAfter 秒数的错误，供 UI 显示倒计时
+   * 在线模式：调用 Pollinations.ai 生成 AI 图片
+   * 离线模式：使用 Canvas 程序化绘制角色形象（完全离线）
+   * 在线失败时自动降级到离线 Canvas 生成
    */
   async generateCharacterImage(params: {
     worldview: Worldview;
     characterPortrait: StoryResult['characterPortrait'];
     userImage?: UserImage | null;
   }): Promise<string> {
+    // 离线时直接使用 Canvas 生成
+    if (!isOnline()) {
+      return generateOfflineCharacterImage(params);
+    }
+
     const prompt = buildImagePrompt({
       worldview: params.worldview,
       characterPortrait: params.characterPortrait,
@@ -236,35 +242,91 @@ export class AIService {
     const encodedPrompt = encodeURIComponent(prompt);
     const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=768&nologo=true&seed=${seed}`;
 
-    const response = await fetch(imageUrl);
+    try {
+      const response = await fetch(imageUrl);
 
-    if (!response.ok) {
-      // 检查 Pollinations 的限流响应头
-      const retryAfter = response.headers.get('retry-after');
-      const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : null;
-
-      if (response.status === 402 || response.status === 503) {
-        const wait = retrySeconds ?? 45;
-        const error = new Error(`免费额度已用完，请等待 ${wait} 秒后重试`) as Error & { retryAfter: number };
-        error.retryAfter = wait;
-        throw error;
+      if (!response.ok) {
+        // 限流或其他错误时降级到离线 Canvas 生成，不阻塞用户
+        const retryAfter = response.headers.get('retry-after');
+        console.warn(`[AIService] 图片生成失败 (${response.status})${retryAfter ? `, 建议等待 ${retryAfter}s` : ''}，降级到离线 Canvas`);
+        return generateOfflineCharacterImage(params);
       }
-      throw new Error(`图片生成失败 (${response.status})`);
-    }
 
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      // 网络错误降级到离线
+      console.warn('[AIService] 图片生成网络错误，降级到离线 Canvas:', error);
+      return generateOfflineCharacterImage(params);
+    }
   }
 
   /**
    * Mock 模式：根据性格画像从模板库返回剧情
+   * 根据 primaryTrait 和 secondaryTrait 动态调整剧情细节
    */
   private async generateMockStory(
     params: GenerateStoryParams,
   ): Promise<StoryResult> {
     // 模拟网络延迟
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    return MOCK_STORIES[params.worldview.id] ?? MOCK_STORIES.palace;
+
+    const base = MOCK_STORIES[params.worldview.id] ?? MOCK_STORIES.palace;
+    const { primaryTrait, secondaryTrait } = params.profile;
+
+    // 根据性格特质动态调整存活集数
+    const traitBonus: Record<string, number> = {
+      cautious: 5,
+      decisive: 8,
+      scheming: 10,
+      kind: -3,
+      ambitious: 6,
+      loyal: 4,
+    };
+    const bonus = (traitBonus[primaryTrait] ?? 0) + (traitBonus[secondaryTrait] ?? 0) * 0.5;
+    const episodes = Math.max(1, Math.round(base.episodesSurvived + bonus));
+
+    // 根据性格特质调整结局描述
+    const traitEndings: Record<string, string> = {
+      cautious: '你的谨慎让你在关键时刻保全了自己，但也让你错过了一些本该属于你的机会。',
+      decisive: '你的果断在每一个生死关头都发挥了作用，你从不犹豫，所以你活到了最后。',
+      scheming: '你的心机让你在这场游戏中始终占据上风，每一步都在你的算计之中。',
+      kind: '你的善良在这个残酷的世界里显得格外珍贵，虽然有时会让你陷入险境，但也为你赢得了真正的伙伴。',
+      ambitious: '你的野心推动你不断向上攀爬，你从不满足于现状，最终站上了巅峰。',
+      loyal: '你的重情重义让你身边聚集了一群生死之交，他们是你活到最后的最大助力。',
+    };
+
+    const ending = `${base.ending} ${traitEndings[primaryTrait] ?? ''}`;
+
+    // 根据性格调整性格分析
+    const traitAnalysis: Record<string, string> = {
+      cautious: '你是典型的"谨慎型"——不轻易出手，但出手必中。适合需要长期布局的工作，但过度谨慎可能错过机会。',
+      decisive: '你是"果断型"——决策迅速，行动力强。适合需要领导力的岗位，但有时需要三思而后行。',
+      scheming: '你是"谋略型"——善于布局和隐忍，天生的战略家。但要注意不要为了成功失去底线。',
+      kind: '你是"善良型"——有同理心，重感情。你的团队会因你而温暖，但要学会保护自己。',
+      ambitious: '你是"野心型"——目标明确，永不满足。你能成就大事，但也要懂得知足。',
+      loyal: '你是"忠义型"——重承诺，讲情义。你身边从不缺真心朋友，但要分清值得的人。',
+    };
+
+    return {
+      ...base,
+      episodesSurvived: episodes,
+      ending,
+      personalityAnalysis: traitAnalysis[primaryTrait] ?? base.personalityAnalysis,
+      characterPortrait: {
+        ...base.characterPortrait,
+        personalityTags: [primaryTrait, secondaryTrait].map(
+          (t) => ({
+            cautious: '谨慎隐忍',
+            decisive: '果断强势',
+            scheming: '心机深沉',
+            kind: '善良单纯',
+            ambitious: '野心勃勃',
+            loyal: '重情重义',
+          })[t] ?? t,
+        ),
+      },
+    };
   }
 
   /**
