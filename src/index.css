@@ -160,19 +160,35 @@
     border: 2px solid var(--color-card-border);
     background-color: var(--color-card-bg);
     color: var(--color-text);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .option-btn::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: linear-gradient(90deg, var(--color-primary)15, transparent);
+    transition: width 0.3s ease;
   }
   .option-btn:hover {
     border-color: var(--color-primary-light);
-    transform: translateX(4px);
+    transform: translateX(6px);
     background-color: var(--color-bg);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  }
+  .option-btn:hover::before {
+    width: 100%;
   }
   .option-btn:active {
-    transform: scale(0.98);
+    transform: scale(0.98) translateX(4px);
   }
   .option-btn-selected {
     border-color: var(--color-primary) !important;
@@ -259,6 +275,53 @@
 }
 .count-animate { animation: countUp 0.6s ease-out; }
 
+/* 故事段落入场动画 */
+@keyframes segmentIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+.animate-segment-in {
+  animation: segmentIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* 开场叙事的呼吸光效 */
+@keyframes narrativeGlow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--color-primary)00, 0 4px 20px rgba(0,0,0,0.06); }
+  50% { box-shadow: 0 0 24px 2px var(--color-primary)20, 0 4px 20px rgba(0,0,0,0.06); }
+}
+.animate-narrative-glow {
+  animation: narrativeGlow 4s ease-in-out infinite;
+}
+
+/* 选择按钮依次入场 */
+@keyframes choiceIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-choice-in {
+  animation: choiceIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* 文字逐行淡入 */
+@keyframes lineFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* 背景装饰球 */
 .bg-orb {
   position: fixed;
@@ -267,4 +330,19 @@
   opacity: 0.4;
   pointer-events: none;
   z-index: 0;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-card-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-light);
 }
