@@ -13,6 +13,7 @@ import type {
 import { calculatePersonalityProfile, getEpisodeContribution } from '../utils/personality';
 import { getAIService } from '../services/aiService';
 import { saveTestResult, recordEpisodeMetric, saveLegendaryRun } from '../lib/storage';
+import { recordChoice, recordEnding } from '../lib/progress';
 import { useGameStore } from './useGameStore';
 import { generateOpening } from '../data/storyLibrary';
 import { getBranchScenes } from '../data/branchingStory';
@@ -38,6 +39,7 @@ interface AppState {
   isGenerating: boolean;
   error: string | null;
   streamingText: string;
+  newlyUnlockedWorldviews: string[]; // 本次结局新解锁的世界观
 
   // Actions
   setStage: (stage: AppStage) => void;
@@ -66,6 +68,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   isGenerating: false,
   error: null,
   streamingText: '',
+  newlyUnlockedWorldviews: [],
 
   setStage: (stage) => set({ stage }),
 
@@ -81,7 +84,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       profile: null,
       story: null,
       error: null,
-      stage: 'origin-setup', // 进入出身设定阶段（混合模式）
+      newlyUnlockedWorldviews: [],
+      stage: 'origin-setup',
     });
   },
 
@@ -153,6 +157,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   chooseAction: async (choice: BranchChoice) => {
     const { worldview, currentScene, storySegments, answeredCount, selectedTraitHistory, episodesSurvived, originSetup } = get();
     if (!worldview || !currentScene) return;
+
+    // 记录玩家选择（用于进度追踪）
+    recordChoice();
 
     set({ isGeneratingConsequence: true });
 
@@ -245,7 +252,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       // 记录闯关完成（世界观探索成就）
       useGameStore.getState().recordRunCompletion({ isPerfect: false });
 
-      // 集数分布埋点（用于验证分布是否均衡、低结局池是否激活）
+      // 记录结局完成，检查是否解锁新世界观
+      const newlyUnlocked = recordEnding(worldview.id);
+      set({ newlyUnlockedWorldviews: newlyUnlocked });
+
+      // 集数分布埋点
       recordEpisodeMetric(worldview.id, story.episodesSurvived);
 
       // 方案 E：集数达到上限 90% 即为「传奇局」，归档供回访
@@ -287,5 +298,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       isGenerating: false,
       error: null,
       streamingText: '',
+      newlyUnlockedWorldviews: [],
     }),
 }));

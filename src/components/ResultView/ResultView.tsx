@@ -6,6 +6,7 @@ import { TRAIT_LABELS } from '../../types';
 import { mapEpisodesToSeason } from '../../utils/personality';
 import { getLegendaryRuns, type LegendaryRun } from '../../lib/storage';
 import { getAIService } from '../../services/aiService';
+import { getWorldview } from '../../data/worldviews';
 
 function useCountUp(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
@@ -32,6 +33,7 @@ export function ResultView() {
     profile,
     originSetup,
     selectedTraitHistory,
+    newlyUnlockedWorldviews,
     reset,
     setStage,
   } = useAppStore();
@@ -323,21 +325,35 @@ export function ResultView() {
           </div>
         )}
 
-        {/* 付费解锁提示 */}
+        {/* 新世界观解锁通知 */}
+        {newlyUnlockedWorldviews.length > 0 && (
+          <div
+            className="card p-6 mb-6 text-center animate-bounce-in"
+            style={{
+              background: 'linear-gradient(135deg, #fbbf2430, #f59e0b30)',
+              border: '2px solid #fbbf24',
+            }}
+          >
+            <div className="text-4xl mb-2 animate-float">🎉</div>
+            <p className="font-bold mb-1 text-lg" style={{ color: '#d97706' }}>恭喜解锁新世界观！</p>
+            <p className="text-sm text-text-secondary">
+              {newlyUnlockedWorldviews.map((id) => getWorldview(id)?.name).join('、')} 已解锁，去挑战吧！
+            </p>
+          </div>
+        )}
+
+        {/* 进度提示 */}
         <div
-          className="card p-6 mb-6 text-center animate-slide-up"
+          className="card p-4 mb-6 text-center animate-slide-up"
           style={{
-            background: 'linear-gradient(135deg, var(--color-primary)15, var(--color-accent)15)',
-            border: '2px dashed var(--color-primary-light)',
-            animationDelay: '0.35s',
+            background: 'var(--color-primary)08',
+            border: '1px solid var(--color-primary)25',
+            animationDelay: '0.3s',
           }}
         >
-          <div className="text-3xl mb-2">🎁</div>
-          <p className="font-bold mb-2 text-lg" style={{ color: 'var(--color-primary)' }}>支持一下创作者</p>
-          <p className="text-sm text-text-secondary mb-4">
-            一杯奶茶钱，解锁所有世界观、专属剧情和深度性格分析
+          <p className="text-sm text-text-secondary">
+            💡 完成更多结局可解锁新世界观，每次选择都会被记录
           </p>
-          <button className="btn-primary animate-pulse-glow">立即支持 ¥1.98</button>
         </div>
 
         {/* 操作按钮 */}

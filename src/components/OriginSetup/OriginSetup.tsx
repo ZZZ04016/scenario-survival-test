@@ -40,8 +40,7 @@ export function OriginSetup() {
   const [background, setBackground] = useState<OriginBackground | null>(() => originData ? rollBackground(originData.backgrounds) : null);
   const [isRolling, setIsRolling] = useState(false);
 
-  // 天赋
-  const [talentMode, setTalentMode] = useState<'random' | 'manual'>('random');
+  // 天赋：随机抽取模式
   const [talentPool, setTalentPool] = useState<TalentCard[]>(() => originData ? rollTalents(originData.talents) : []);
   const [selectedTalents, setSelectedTalents] = useState<TalentCard[]>([]);
   const [expandedTalentId, setExpandedTalentId] = useState<string | null>(null);
@@ -92,11 +91,7 @@ export function OriginSetup() {
 
   // ========== 天赋操作 ==========
   const rerollTalents = () => {
-    if (talentMode === 'manual') {
-      setTalentPool(originData.talents);
-    } else {
-      setTalentPool(rollTalents(originData.talents));
-    }
+    setTalentPool(rollTalents(originData.talents));
     setSelectedTalents([]);
     setExpandedTalentId(null);
   };
@@ -211,16 +206,8 @@ export function OriginSetup() {
             <div>
               <h2 className="text-lg font-bold" style={{ color: worldview.accentColor }}>✨ 天赋</h2>
               <p className="text-xs text-text-secondary mt-0.5">
-                {talentMode === 'random' ? '十中取三，命也' : '尽在眼前，自选'}
+                十中取三，命也
               </p>
-            </div>
-            <div className="flex gap-1.5">
-              <button onClick={() => { setTalentMode('random'); setTalentPool(rollTalents(originData.talents)); setSelectedTalents([]); }}
-                className="text-xs px-2.5 py-1 rounded-md font-medium transition-all"
-                style={talentMode === 'random' ? accentBtnActive : accentBtn}>随机池</button>
-              <button onClick={() => { setTalentMode('manual'); setTalentPool(originData.talents); setSelectedTalents([]); }}
-                className="text-xs px-2.5 py-1 rounded-md font-medium transition-all"
-                style={talentMode === 'manual' ? accentBtnActive : accentBtn}>全部</button>
             </div>
           </div>
 
@@ -250,7 +237,7 @@ export function OriginSetup() {
             <button onClick={rerollTalents}
               className="flex-1 py-2 rounded-lg text-sm font-medium transition-all hover:scale-[1.01]"
               style={accentBtn}>
-              🔀 {talentMode === 'manual' ? '重置' : '换一组'}
+              🔀 换一组
             </button>
             <button onClick={randomPickTalents}
               className="flex-1 py-2 rounded-lg text-sm font-medium text-white transition-all hover:scale-[1.01]"
