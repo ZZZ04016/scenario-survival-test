@@ -42,6 +42,48 @@ const PALACE_BACKGROUNDS: OriginBackground[] = [
     description: '父亲是江南首富，花了大价钱把你送进宫。宫里人看不起商人出身，但你的银钱足以打通不少关节。',
     episodeBonus: 1,
   },
+  {
+    id: 'palace-dancer',
+    name: '教坊司舞姬',
+    description: '你因舞姿出众被选入教坊司，一舞倾城。容貌是你的武器，也是招来祸患的根源。',
+    episodeBonus: 1,
+  },
+  {
+    id: 'palace-princess-maid',
+    name: '公主伴读',
+    description: '你是长公主的伴读，自幼在宫中长大，深谙后宫生存之道。公主的庇护是你的靠山，也是你站队的标志。',
+    episodeBonus: 3,
+  },
+  {
+    id: 'palace-tribute',
+    name: '异国贡女',
+    description: '你是藩属国进贡的贡女，在这陌生的皇宫里举目无亲。异国的容貌让你格外引人注目，也让你成为众矢之的。',
+    episodeBonus: -1,
+  },
+  {
+    id: 'palace-cook',
+    name: '御膳房厨娘',
+    description: '你在御膳房当差，一手好厨艺深得贵人赏识。拿捏住别人的胃口，有时候比拿捏住人心更管用。',
+    episodeBonus: 0,
+  },
+  {
+    id: 'palace-eunuch-daughter',
+    name: '太监义女',
+    description: '你是掌印太监的义女，在宫里算有几分体面。但太监的权势来得快去得也快，你得学会给自己留后路。',
+    episodeBonus: 2,
+  },
+  {
+    id: 'palace-nanny-daughter',
+    name: '奶娘之女',
+    description: '你母亲是皇子的奶娘，你自幼随母亲入宫。你和皇子一起长大，这份情分是别人求不来的，也是别人忌惮的。',
+    episodeBonus: 2,
+  },
+  {
+    id: 'palace-sinner',
+    name: '辛者库罪奴',
+    description: '你被罚入辛者库为奴，做着最下贱的苦役。在这里活着就是胜利，而你心里藏着一个不为人知的秘密。',
+    episodeBonus: -3,
+  },
 ];
 
 const PALACE_TALENTS: TalentCard[] = [
@@ -96,6 +138,48 @@ const APOCALYPSE_BACKGROUNDS: OriginBackground[] = [
     description: '你早就预言了这一天，地下室里囤满了物资和武器。别人嘲笑你多年，现在轮到你笑了。',
     episodeBonus: 2,
   },
+  {
+    id: 'apo-firefighter',
+    name: '消防员',
+    description: '你习惯了在灾难中救人，体能和勇气都是顶尖的。但这一次，你救的可能只有自己。',
+    episodeBonus: 3,
+  },
+  {
+    id: 'apo-nurse',
+    name: 'ICU护士',
+    description: '你在重症监护室工作，见惯了生死。你知道怎么处理伤口、怎么用药，这些知识在末世比金子还贵。',
+    episodeBonus: 2,
+  },
+  {
+    id: 'apo-rider',
+    name: '外卖骑手',
+    description: '你熟悉这座城市的每一条小巷，骑着电动车穿梭在楼宇之间。路熟、车快、能挨饿，这就是你的生存资本。',
+    episodeBonus: 1,
+  },
+  {
+    id: 'apo-coach',
+    name: '健身房教练',
+    description: '你一身腱子肉，力气大得能一拳放倒一个丧尸。但光有蛮力在末世可不够，你还得学会动脑子。',
+    episodeBonus: 1,
+  },
+  {
+    id: 'apo-streamer',
+    name: '户外主播',
+    description: '你常年在野外直播，懂求生、会找水源、能辨方向。你的粉丝早就散了，但你学到的本事还在。',
+    episodeBonus: 2,
+  },
+  {
+    id: 'apo-hacker',
+    name: '程序员',
+    description: '你是个黑客，能黑进任何系统。末世里网络基本瘫痪，但你懂电子设备、会修无线电，这让你成了香饽饽。',
+    episodeBonus: 0,
+  },
+  {
+    id: 'apo-store-owner',
+    name: '便利店店长',
+    description: '你守着一家小便利店，里面有食物、水和日用品。但你也知道，这些东西撑不了多久，而且会引来觊觎。',
+    episodeBonus: 1,
+  },
 ];
 
 const APOCALYPSE_TALENTS: TalentCard[] = [
@@ -148,6 +232,48 @@ const CULTIVATION_BACKGROUNDS: OriginBackground[] = [
     id: 'cul-royal',
     name: '皇室后裔',
     description: '你是凡间王朝的皇子，因身具灵根被宗门破格收录。凡间的权势在修仙界不值一提，但你的城府远超同龄人。',
+    episodeBonus: 2,
+  },
+  {
+    id: 'cul-herbalist',
+    name: '药农之子',
+    description: '你世代以采药为生，识得天下灵草。虽然修为平平，但在炼丹一道上有着得天独厚的优势。',
+    episodeBonus: 1,
+  },
+  {
+    id: 'cul-blacksmith',
+    name: '铁匠之女',
+    description: '你在铁匠铺长大，从小与炉火为伴。你的身体比寻常修士更坚韧，对炼器之道也有着天然的领悟。',
+    episodeBonus: 0,
+  },
+  {
+    id: 'cul-courtesan',
+    name: '青楼花魁',
+    description: '你曾是青楼头牌，琴棋书画样样精通。一个偶然的机会让你踏上修仙路，你的容貌和心机在修仙界依然是利器。',
+    episodeBonus: 1,
+  },
+  {
+    id: 'cul-escort',
+    name: '镖局少主',
+    description: '你是江湖镖局的少主，自幼习武，走南闯北。虽然修为不高，但你的江湖阅历和武艺让你在同阶中罕有敌手。',
+    episodeBonus: 0,
+  },
+  {
+    id: 'cul-princess',
+    name: '落难公主',
+    description: '你曾是凡间公主，国破家亡后被一位修仙者所救。你失去了一切，但也因此了无牵挂，修行之心比任何人都坚定。',
+    episodeBonus: -1,
+  },
+  {
+    id: 'cul-bandit',
+    name: '山贼头目',
+    description: '你占山为王多年，杀人越货无恶不作。一次劫镖中你抢到了一本修仙功法，从此踏上一条不同的路。',
+    episodeBonus: -2,
+  },
+  {
+    id: 'cul-monk',
+    name: '佛家弟子',
+    description: '你自幼在佛门长大，修的是禅武合一。虽然道家修士看不起佛门功法，但你的心性和肉身都远超同辈。',
     episodeBonus: 2,
   },
 ];
