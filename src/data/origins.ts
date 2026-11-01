@@ -84,6 +84,48 @@ const PALACE_BACKGROUNDS: OriginBackground[] = [
     description: '你被罚入辛者库为奴，做着最下贱的苦役。在这里活着就是胜利，而你心里藏着一个不为人知的秘密。',
     episodeBonus: -3,
   },
+  {
+    id: 'palace-guardsman',
+    name: '禁军之女',
+    description: '你父亲是禁军统领，你自幼耳濡目染，懂得一些拳脚功夫。在深宫之中，能保护自己的不只是心机。',
+    episodeBonus: 2,
+  },
+  {
+    id: 'palace-calligrapher',
+    name: '翰林书吏',
+    description: '你是翰林院的书吏，写得一手好字，也看过太多机密奏折。知道得太多，有时候是福，有时候是祸。',
+    episodeBonus: 1,
+  },
+  {
+    id: 'palace-astrologer',
+    name: '钦天监女官',
+    description: '你精通星象占卜，能从星辰运行中窥探天机。宫里人敬畏你，也忌惮你，因为你知道他们的命数。',
+    episodeBonus: 2,
+  },
+  {
+    id: 'palace-seamstress',
+    name: '尚衣局绣娘',
+    description: '你在尚衣局当差，一针一线都关乎贵人的颜面。你能从衣裳的细节里看出宫里的风向变化。',
+    episodeBonus: 0,
+  },
+  {
+    id: 'palace-priestess',
+    name: '祭祀女官',
+    description: '你负责宫中祭祀大典，能与「先祖」沟通。这份神秘的身份让你在宫中地位特殊，也让你成为各方拉拢的对象。',
+    episodeBonus: 1,
+  },
+  {
+    id: 'palace-adoptive',
+    name: '妃嫔养女',
+    description: '你被一位失势的妃嫔收养，从小在冷宫中长大。你懂得察言观色，也懂得在夹缝中求生。',
+    episodeBonus: -1,
+  },
+  {
+    id: 'palace-doctor-child',
+    name: '御医之女',
+    description: '你父亲是太医院院判，你自幼随父习医。你的医术在宫里是救命的本事，但也可能成为害人的工具。',
+    episodeBonus: 3,
+  },
 ];
 
 const PALACE_TALENTS: TalentCard[] = [
@@ -180,6 +222,48 @@ const APOCALYPSE_BACKGROUNDS: OriginBackground[] = [
     description: '你守着一家小便利店，里面有食物、水和日用品。但你也知道，这些东西撑不了多久，而且会引来觊觎。',
     episodeBonus: 1,
   },
+  {
+    id: 'apo-farmer',
+    name: '农场主',
+    description: '你在郊区有一个小农场，有地、有粮、有工具。末世里能种出粮食的人，就是最有底气的人。',
+    episodeBonus: 3,
+  },
+  {
+    id: 'apo-hunter',
+    name: '老猎人',
+    description: '你在山里打了半辈子猎，追踪、设陷阱、用弓都是好手。丧尸在你眼里，不过是另一种猎物。',
+    episodeBonus: 3,
+  },
+  {
+    id: 'apo-engineer',
+    name: '土木工程师',
+    description: '你懂建筑结构，会设计防御工事。在末世里，一堵结实的墙比十把枪都管用。',
+    episodeBonus: 2,
+  },
+  {
+    id: 'apo-chemist',
+    name: '化学老师',
+    description: '你懂化学，能自制消毒剂、燃烧弹，甚至简易炸药。知识就是力量，在末世更是如此。',
+    episodeBonus: 2,
+  },
+  {
+    id: 'apo-pilot',
+    name: '直升机飞行员',
+    description: '你会开直升机，这在末世是最稀缺的技能之一。但你也知道，没有燃料，飞机就是一堆废铁。',
+    episodeBonus: 4,
+  },
+  {
+    id: 'apo-detective',
+    name: '刑警',
+    description: '你是个老刑警，观察力和判断力都是顶尖的。在末世里，人心比丧尸更可怕，而你最擅长看穿人心。',
+    episodeBonus: 2,
+  },
+  {
+    id: 'apo-yoga',
+    name: '瑜伽教练',
+    description: '你身体柔韧、平衡感极佳，还懂冥想减压。在高压的末世里，保持冷静和灵活就是你最大的优势。',
+    episodeBonus: 0,
+  },
 ];
 
 const APOCALYPSE_TALENTS: TalentCard[] = [
@@ -275,6 +359,48 @@ const CULTIVATION_BACKGROUNDS: OriginBackground[] = [
     name: '佛家弟子',
     description: '你自幼在佛门长大，修的是禅武合一。虽然道家修士看不起佛门功法，但你的心性和肉身都远超同辈。',
     episodeBonus: 2,
+  },
+  {
+    id: 'cul-merchant',
+    name: '商号少东家',
+    description: '你是修仙界最大商号的少东家，富可敌国。灵石、丹药、法宝，你想买什么就买什么，但你的修为全靠砸钱堆出来。',
+    episodeBonus: 3,
+  },
+  {
+    id: 'cul-fisher',
+    name: '渔家少年',
+    description: '你在海边长大，水性极佳。一个偶然的机会你在海底发现了一处洞府，从此踏上修仙路。你的水性在水战中无人能敌。',
+    episodeBonus: 0,
+  },
+  {
+    id: 'cul-hunter',
+    name: '猎户之子',
+    description: '你世代以打猎为生，箭术精准，追踪能力一流。虽然没有灵根，但你意外获得了一本体修功法，走上了以力证道之路。',
+    episodeBonus: 1,
+  },
+  {
+    id: 'cul-servant',
+    name: '宗门杂役',
+    description: '你是青云宗最底层的杂役弟子，每天干着劈柴挑水的活。但你利用一切机会偷偷修炼，期待有朝一日能一飞冲天。',
+    episodeBonus: -1,
+  },
+  {
+    id: 'cul-artisan',
+    name: '符师学徒',
+    description: '你是一位老符师的学徒，画符天赋极高。虽然修为不高，但你画出的符箓连金丹真人都抢着要。',
+    episodeBonus: 2,
+  },
+  {
+    id: 'cul-prophet',
+    name: '占卜师',
+    description: '你天生灵觉敏锐，能隐约感知到未来的片段。这份能力让你在修仙界屡获机缘，但也让你看到了太多不该看的东西。',
+    episodeBonus: 2,
+  },
+  {
+    id: 'cul-swordsman',
+    name: '江湖剑客',
+    description: '你是凡间赫赫有名的剑客，一剑霜寒十四州。你不屑于修仙界的繁文缛节，只相信手中的剑。你的剑意，连修士都要忌惮三分。',
+    episodeBonus: 1,
   },
 ];
 
