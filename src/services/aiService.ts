@@ -13,6 +13,7 @@ export interface GenerateStoryParams {
   profile: PersonalityProfile;
   answerSummary: string[];
   userImage?: UserImage | null;
+  originSetup?: OriginSetup;
   onProgress?: (partialText: string) => void;
 }
 
@@ -28,7 +29,8 @@ export interface GenerateEndingParams {
   worldview: Worldview;
   profile: PersonalityProfile;
   storyHistory: string[];
-  episodesSurvived?: number; // 方案 C：逐抉择累加的集数（若提供则优先使用，否则按性格公式计算）
+  episodesSurvived?: number;
+  originSetup?: OriginSetup;
 }
 
 /**
@@ -576,6 +578,7 @@ export class AIService {
       profile: params.profile,
       answerSummary: params.answerSummary,
       imageDescription: params.userImage?.description,
+      originSetup: params.originSetup,
     });
 
     const controller = new AbortController();
@@ -725,11 +728,12 @@ ${historyText}
     }
 
     const historyText = params.storyHistory.join('\n');
-    const prompt = `你是一位沉浸式互动小说的叙事引擎。以下是玩家经历的完整剧情：
+    const genderText = params.originSetup?.gender === 'male' ? '男性' : '女性';
+    const prompt = `你是一位沉浸式互动小说的叙事引擎。以下是玩家（${genderText}）经历的完整剧情：
 
 ${historyText}
 
-请根据玩家的决策风格，为这个故事生成一个结局。输出 JSON 格式：
+请根据玩家的决策风格，为这个故事生成一个结局。角色性别为${genderText}，外貌和称呼要符合性别。输出 JSON 格式：
 {
   "role": "角色设定一句话",
   "story": ["剧情片段1", "剧情片段2"],

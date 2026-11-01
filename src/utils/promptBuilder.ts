@@ -6,20 +6,21 @@ interface BuildPromptParams {
   profile: PersonalityProfile;
   answerSummary: string[];
   imageDescription?: string;
+  originSetup?: OriginSetup;
 }
 
-const WORLDVIEW_PROMPT_MAP: Record<string, { setting: string; role: string }> = {
+const WORLDVIEW_PROMPT_MAP: Record<string, { setting: string; role: (gender: string) => string }> = {
   palace: {
     setting: '这是一个架空的古代王朝后宫，妃嫔争宠、权力倾轧。',
-    role: '你是一个刚入宫的妃嫔',
+    role: (g) => g === 'male' ? '你是一个刚入宫的男子（侍卫/内侍/男宠等身份）' : '你是一个刚入宫的妃嫔',
   },
   apocalypse: {
     setting: '丧尸病毒爆发后的末世，资源匮乏，人性考验。',
-    role: '你是一个末世幸存者',
+    role: (g) => g === 'male' ? '你是一个末世幸存者（男性）' : '你是一个末世幸存者（女性）',
   },
   cultivation: {
     setting: '灵气复苏的修仙世界，宗门林立，弱肉强食。',
-    role: '你是一个刚踏入修仙路的修士',
+    role: (g) => g === 'male' ? '你是一个刚踏入修仙路的男修士' : '你是一个刚踏入修仙路的女修士',
   },
 };
 
@@ -45,8 +46,11 @@ export function buildStoryPrompt({
   profile,
   answerSummary,
   imageDescription,
+  originSetup,
 }: BuildPromptParams): string {
-  const { setting, role } = WORLDVIEW_PROMPT_MAP[worldview.id] ?? WORLDVIEW_PROMPT_MAP.palace;
+  const { setting, role: roleFn } = WORLDVIEW_PROMPT_MAP[worldview.id] ?? WORLDVIEW_PROMPT_MAP.palace;
+  const gender = originSetup?.gender ?? 'female';
+  const role = roleFn(gender);
 
   const primaryLabel = TRAIT_LABELS[profile.primaryTrait];
   const secondaryLabel = TRAIT_LABELS[profile.secondaryTrait];

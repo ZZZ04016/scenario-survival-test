@@ -15,6 +15,7 @@ const mockWorldview: Worldview = {
 };
 
 const originA: OriginSetup = {
+  gender: 'female',
   background: { id: 'palace-noble', name: '世家嫡女', description: '', episodeBonus: 4 },
   talents: [
     { id: 'p-t3', name: '绝色容颜', description: '', rarity: 'legendary', episodeBonus: 4 },
@@ -25,6 +26,7 @@ const originA: OriginSetup = {
 };
 
 const originB: OriginSetup = {
+  gender: 'female',
   background: { id: 'palace-maid', name: '浣衣局宫女', description: '', episodeBonus: -2 },
   talents: [
     { id: 'p-t9', name: '体弱多病', description: '', rarity: 'common', episodeBonus: -3 },

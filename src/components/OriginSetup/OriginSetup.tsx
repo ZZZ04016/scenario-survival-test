@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { OriginBackground, PersonalityTrait, TalentCard } from '../../types';
+import type { OriginBackground, PersonalityTrait, TalentCard, Gender } from '../../types';
 import { TRAIT_LABELS } from '../../types';
 import { getOriginData, rollBackground, rollTalents, RARITY_STYLES } from '../../data/origins';
 import { useAppStore } from '../../store/useAppStore';
@@ -34,6 +34,9 @@ function pickRandomTalents(pool: TalentCard[], count = 3): TalentCard[] {
 export function OriginSetup() {
   const { worldview, setOriginSetup } = useAppStore();
   const originData = worldview ? getOriginData(worldview.id) : null;
+
+  // 性别
+  const [gender, setGender] = useState<Gender | null>(null);
 
   // 出身背景
   const [bgMode, setBgMode] = useState<'random' | 'manual'>('random');
@@ -74,7 +77,7 @@ export function OriginSetup() {
 
   if (!worldview || !originData || !background) return null;
 
-  const canStart = selectedTalents.length === 3 && initialTrait !== null;
+  const canStart = gender !== null && selectedTalents.length === 3 && initialTrait !== null;
 
   // ========== 出身背景操作 ==========
   const rerollBackground = () => {
@@ -122,6 +125,7 @@ export function OriginSetup() {
   const handleStart = () => {
     if (!canStart || !background) return;
     setOriginSetup({
+      gender: gender as Gender,
       background,
       talents: selectedTalents,
       initialTrait: initialTrait as PersonalityTrait,
@@ -145,6 +149,35 @@ export function OriginSetup() {
           <p className="text-sm text-text-secondary">
             选择你的起点，未知的命运正在等待
           </p>
+        </div>
+
+        {/* 性别选择 */}
+        <div className="card p-5 mb-5">
+          <h2 className="text-lg font-bold mb-3" style={{ color: worldview.accentColor }}>👤 性别</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setGender('male')}
+              className={`p-4 rounded-xl border-2 transition-all text-center ${gender === 'male' ? 'scale-[1.02]' : 'hover:scale-[1.01]'}`}
+              style={{
+                borderColor: gender === 'male' ? worldview.accentColor : 'var(--color-card-border)',
+                background: gender === 'male' ? `${worldview.accentColor}12` : 'transparent',
+              }}
+            >
+              <div className="text-3xl mb-1">♂️</div>
+              <div className="font-bold" style={{ color: gender === 'male' ? worldview.accentColor : 'var(--color-text)' }}>男</div>
+            </button>
+            <button
+              onClick={() => setGender('female')}
+              className={`p-4 rounded-xl border-2 transition-all text-center ${gender === 'female' ? 'scale-[1.02]' : 'hover:scale-[1.01]'}`}
+              style={{
+                borderColor: gender === 'female' ? worldview.accentColor : 'var(--color-card-border)',
+                background: gender === 'female' ? `${worldview.accentColor}12` : 'transparent',
+              }}
+            >
+              <div className="text-3xl mb-1">♀️</div>
+              <div className="font-bold" style={{ color: gender === 'female' ? worldview.accentColor : 'var(--color-text)' }}>女</div>
+            </button>
+          </div>
         </div>
 
         {/* 出身背景 */}
@@ -335,7 +368,7 @@ export function OriginSetup() {
             <button onClick={handleStart} disabled={!canStart}
               className={`px-6 py-3 rounded-xl font-bold text-white transition-all ${canStart ? 'hover:scale-105 active:scale-95 shadow-lg' : 'opacity-40 cursor-not-allowed'}`}
               style={{ background: worldview.accentColor }}>
-              {canStart ? '⚔️ 推演命运' : `还差 ${3 - selectedTalents.length} 天赋${!initialTrait ? ' + 心性' : ''}`}
+              {canStart ? '⚔️ 推演命运' : `还差${!gender ? ' 性别' : ''}${selectedTalents.length < 3 ? ` ${3 - selectedTalents.length}天赋` : ''}${!initialTrait ? ' 心性' : ''}`}
             </button>
           </div>
         </div>

@@ -217,7 +217,7 @@ export const useAppStore = create<AppState>((set, get) => ({
    * 生成最终结局
    */
   generateEnding: async () => {
-    const { worldview, storySegments, selectedTraitHistory, episodesSurvived } = get();
+    const { worldview, storySegments, selectedTraitHistory, episodesSurvived, originSetup } = get();
     if (!worldview) return;
 
     set({ isGenerating: true, error: null, stage: 'generating', streamingText: '' });
@@ -245,6 +245,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         profile,
         storyHistory,
         episodesSurvived: finalEpisodes,
+        originSetup: originSetup ?? undefined,
       });
 
       set({ profile, story, stage: 'result', isGenerating: false });

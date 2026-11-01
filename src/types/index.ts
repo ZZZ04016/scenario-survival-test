@@ -256,8 +256,12 @@ export interface TalentCard {
   episodeBonus: number;      // 对存活集数的加成（可正可负，负面天赋为负）
 }
 
+// 性别
+export type Gender = 'male' | 'female';
+
 // 完整出身设定（混合模式：先天随机 + 后天选择）
 export interface OriginSetup {
+  gender: Gender;                       // 玩家选择的性别
   background: OriginBackground;          // 随机出身背景
   talents: TalentCard[];                 // 随机抽取的3个天赋
   initialTrait: PersonalityTrait;        // 玩家选择的初始性格倾向
