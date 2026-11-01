@@ -1,73 +1,65 @@
 import { create } from 'zustand';
 import type {
   AppStage,
+  BranchChoice,
+  BranchScene,
+  OriginSetup,
   PersonalityProfile,
-  PriceTier,
   QuizOption,
-  QuizQuestion,
+  StorySegment,
   StoryResult,
-  UserImage,
   Worldview,
-  WorldviewId,
 } from '../types';
-import { getQuestions, selectNextQuestion } from '../data/questions';
-import { calculatePersonalityProfile } from '../utils/personality';
+import { calculatePersonalityProfile, getEpisodeContribution } from '../utils/personality';
 import { getAIService } from '../services/aiService';
-import { saveTestResult } from '../lib/storage';
-
-const TOTAL_QUESTIONS = 10;
+import { saveTestResult, recordEpisodeMetric, saveLegendaryRun } from '../lib/storage';
+import { useGameStore } from './useGameStore';
+import { generateOpening } from '../data/storyLibrary';
+import { getBranchScenes } from '../data/branchingStory';
 
 interface AppState {
-  // 应用状态
   stage: AppStage;
   worldview: Worldview | null;
-  tier: PriceTier;
 
-  // 答题状态（动态分支）
-  questionSequence: QuizQuestion[]; // 已展示的题目序列
-  currentQuestionIndex: number;
-  selectedOptions: QuizOption[];
+  // 出身设定（混合模式：先天随机出身+天赋，后天选择性格倾向）
+  originSetup: OriginSetup | null;
 
-  // 用户上传图片
-  userImage: UserImage | null;
+  // 沉浸式剧情
+  storySegments: StorySegment[];   // 已演绎的剧情片段
+  currentScene: BranchScene | null; // 当前待抉择的场景
+  answeredCount: number;           // 已完成的抉择数
+  isGeneratingConsequence: boolean; // 是否正在演绎后果
+  selectedTraitHistory: string[];  // 历次选择的特质（用于性格画像）
+  episodesSurvived: number;        // 逐抉择累加的存活集数（方案 C：与实际抉择挂钩）
 
   // 结果
   profile: PersonalityProfile | null;
   story: StoryResult | null;
   isGenerating: boolean;
   error: string | null;
-  streamingText: string; // AI 流式输出的部分文本（用于 3 秒感知）
-
-  // 角色图片生成
-  characterImage: string | null; // 生成的角色图片 URL
-  isGeneratingImage: boolean;
-  imageError: string | null;
-  imageRetryAfter: number | null; // 限流时可重试的时间戳（毫秒）
+  streamingText: string;
 
   // Actions
   setStage: (stage: AppStage) => void;
   selectWorldview: (worldview: Worldview) => void;
-  setTier: (tier: PriceTier) => void;
-  setUserImage: (image: UserImage | null) => void;
-  startQuiz: () => void;
-  selectOption: (option: QuizOption) => void;
-  goToNextQuestion: () => void;
-  goToPrevQuestion: () => void;
-  generateStory: () => Promise<void>;
-  generateCharacterImage: () => Promise<void>;
+  setOriginSetup: (origin: OriginSetup) => void;
+  startStory: () => Promise<void>;
+  chooseAction: (choice: BranchChoice) => Promise<void>;
+  generateEnding: () => Promise<void>;
   reset: () => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
   stage: 'worldview-select',
   worldview: null,
-  tier: 'full',
+  originSetup: null,
 
-  questionSequence: [],
-  currentQuestionIndex: 0,
-  selectedOptions: [],
-
-  userImage: null,
+  storySegments: [],
+  currentScene: null,
+  answeredCount: 0,
+  isGeneratingConsequence: false,
+  selectedTraitHistory: [],
+  episodesSurvived: 1,
 
   profile: null,
   story: null,
@@ -75,147 +67,206 @@ export const useAppStore = create<AppState>((set, get) => ({
   error: null,
   streamingText: '',
 
-  characterImage: null,
-  isGeneratingImage: false,
-  imageError: null,
-  imageRetryAfter: null,
-
   setStage: (stage) => set({ stage }),
 
   selectWorldview: (worldview) => {
-    // 进入图片上传阶段（可选），再开始答题
     set({
       worldview,
-      stage: 'image-upload',
-      questionSequence: [],
-      currentQuestionIndex: 0,
-      selectedOptions: [],
-      userImage: null,
+      originSetup: null,
+      storySegments: [],
+      currentScene: null,
+      answeredCount: 0,
+      selectedTraitHistory: [],
+      episodesSurvived: 1,
       profile: null,
       story: null,
       error: null,
+      stage: 'origin-setup', // 进入出身设定阶段（混合模式）
     });
   },
 
-  setTier: (tier) => set({ tier }),
-
-  setUserImage: (image) => set({ userImage: image }),
-
-  startQuiz: () => {
+  /**
+   * 设定出身（随机出身背景+天赋 + 玩家选择性格倾向）后进入剧情
+   * 天赋与出身的集数加成作为初始基准，后续抉择在此基础上累加
+   */
+  setOriginSetup: (origin) => {
     const { worldview } = get();
     if (!worldview) return;
-    // 从题库随机选第一道题
-    const pool = getQuestions(worldview.id as WorldviewId);
-    const firstQuestion = pool[Math.floor(Math.random() * pool.length)];
-    set({
-      questionSequence: [firstQuestion],
-      currentQuestionIndex: 0,
-      selectedOptions: [],
-      stage: 'quiz',
-    });
+
+    // 计算初始集数基准：出身加成 + 天赋加成之和
+    const talentBonus = origin.talents.reduce((sum, t) => sum + t.episodeBonus, 0);
+    const baseEpisodes = Math.max(1, worldview.episodeMax * 0.1) + origin.background.episodeBonus + talentBonus;
+    const initialEpisodes = Math.max(1, Math.min(worldview.episodeMax, Math.round(baseEpisodes)));
+
+    set({ originSetup: origin, episodesSurvived: initialEpisodes });
+    void get().startStory();
   },
 
-  selectOption: (option) => {
-    const { currentQuestionIndex, selectedOptions } = get();
-    const newOptions = [...selectedOptions];
-    newOptions[currentQuestionIndex] = option;
-    set({ selectedOptions: newOptions });
-  },
-
-  goToNextQuestion: () => {
-    const { worldview, currentQuestionIndex, selectedOptions, questionSequence } = get();
+  /**
+   * 开始剧情：根据出身设定生成开篇叙事 + 加载第一个分支场景
+   */
+  startStory: async () => {
+    const { worldview, originSetup } = get();
     if (!worldview) return;
 
-    const answeredCount = currentQuestionIndex + 1;
+    // 保留 setOriginSetup 已计算的初始集数（出身+天赋加成），不在此处重置
+    set({ stage: 'story', storySegments: [], answeredCount: 0, selectedTraitHistory: [], error: null });
 
-    if (answeredCount < TOTAL_QUESTIONS) {
-      // 动态选择下一道题
-      const pool = getQuestions(worldview.id as WorldviewId);
-      const answeredIds = questionSequence.map((q) => q.id);
-      // 用已选选项的特质来决定下一题
-      const nextQuestion = selectNextQuestion(pool, answeredIds, selectedOptions.slice(0, answeredCount));
+    try {
+      // 生成开篇（根据出身背景生成差异化开篇）
+      const openingText = generateOpening(worldview.id, originSetup);
 
-      if (nextQuestion) {
-        set({
-          questionSequence: [...questionSequence, nextQuestion],
-          currentQuestionIndex: currentQuestionIndex + 1,
-        });
-      } else {
-        // 题库用完，进入生成阶段
-        finishQuiz();
+      const openingSegment: StorySegment = {
+        id: `opening-${Date.now()}`,
+        type: 'opening',
+        text: openingText,
+      };
+
+      // 加载分支剧情的第一幕（根据初始性格倾向筛选选项）
+      const scenes = getBranchScenes(worldview.id, originSetup?.initialTrait);
+      const firstScene = scenes[0] ?? null;
+
+      set({
+        storySegments: [openingSegment],
+        currentScene: firstScene,
+        answeredCount: 0,
+      });
+    } catch (error) {
+      // 开篇生成失败也不阻塞，用兜底文本
+      const fallback = originSetup
+        ? `${originSetup.background.name}的身份在${worldview.name}的世界中展开，命运的齿轮开始转动……`
+        : `${worldview.name}的世界在你面前展开，命运的齿轮开始转动……`;
+      const scenes = getBranchScenes(worldview.id, originSetup?.initialTrait);
+      const firstScene = scenes[0] ?? null;
+      set({
+        storySegments: [{ id: 'opening-fallback', type: 'opening', text: fallback }],
+        currentScene: firstScene,
+        answeredCount: 0,
+        error: null,
+      });
+    }
+  },
+
+  /**
+   * 用户做出抉择：读取该选择专属的 4 段式后果叙事，推进到下一幕
+   */
+  chooseAction: async (choice: BranchChoice) => {
+    const { worldview, currentScene, storySegments, answeredCount, selectedTraitHistory, episodesSurvived, originSetup } = get();
+    if (!worldview || !currentScene) return;
+
+    set({ isGeneratingConsequence: true });
+
+    try {
+      // 模拟叙事演绎的短暂延迟，增强沉浸感
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // 构建 4 段式后果叙事（即时事件 → 连锁反应 → 人物互动 → 过渡下一幕）
+      const c = choice.consequence;
+      const consequenceText = `${c.immediate}\n\n${c.chainReaction}\n\n${c.characterInteraction}\n\n${c.transition}`;
+
+      const consequenceSegment: StorySegment = {
+        id: `consequence-${Date.now()}`,
+        type: 'consequence',
+        text: consequenceText,
+      };
+
+      const newSegments = [...storySegments, consequenceSegment];
+      const newAnsweredCount = answeredCount + 1;
+      const newTraitHistory = [...selectedTraitHistory, choice.trait];
+
+      // 加载下一幕（固定剧情序列，直接取下一幕）
+      const scenes = getBranchScenes(worldview.id, originSetup?.initialTrait);
+      const nextScene = scenes[newAnsweredCount] ?? null;
+
+      // 方案 C：按本次抉择累加存活集数（与实际抉择挂钩，而非纯性格投影）
+      const totalChoices = scenes.length || 8;
+      let contribution = getEpisodeContribution(choice, worldview.episodeMax, totalChoices);
+
+      // 契合初始性格倾向的抉择：坚守本心会带来微小的生存加成（不强制，仅鼓励角色一致性）
+      const matchesInitialTrait = originSetup?.initialTrait === choice.trait;
+      if (matchesInitialTrait) {
+        contribution += 1;
       }
-    } else {
-      // 答完所有题目
-      finishQuiz();
-    }
 
-    function finishQuiz() {
-      const profile = calculatePersonalityProfile(selectedOptions.slice(0, TOTAL_QUESTIONS));
-      set({ profile, stage: 'generating' });
+      const newEpisodes = Math.max(1, Math.min(worldview.episodeMax, episodesSurvived + contribution));
+
+      set({
+        storySegments: newSegments,
+        currentScene: nextScene,
+        answeredCount: newAnsweredCount,
+        selectedTraitHistory: newTraitHistory,
+        episodesSurvived: newEpisodes,
+        isGeneratingConsequence: false,
+      });
+    } catch (error) {
+      set({
+        isGeneratingConsequence: false,
+        error: error instanceof Error ? error.message : '剧情演绎失败',
+      });
     }
   },
 
-  goToPrevQuestion: () => {
-    const { currentQuestionIndex } = get();
-    if (currentQuestionIndex > 0) {
-      set({ currentQuestionIndex: currentQuestionIndex - 1 });
-    }
-  },
-
-  generateStory: async () => {
-    const { worldview, profile, selectedOptions, questionSequence, userImage } = get();
-    if (!worldview || !profile) return;
+  /**
+   * 生成最终结局
+   */
+  generateEnding: async () => {
+    const { worldview, storySegments, selectedTraitHistory, episodesSurvived } = get();
+    if (!worldview) return;
 
     set({ isGenerating: true, error: null, stage: 'generating', streamingText: '' });
 
     try {
-      const answerSummary = selectedOptions.slice(0, TOTAL_QUESTIONS).map((option, i) => {
-        const question = questionSequence[i];
-        return `面对"${question?.text}"，你选择了"${option.text}"`;
-      });
+      // 构造伪 options 数组用于 calculatePersonalityProfile
+      const fakeOptions: QuizOption[] = selectedTraitHistory.map((trait) => ({
+        id: 'x',
+        text: '',
+        trait: trait as never,
+      }));
+      const profile = calculatePersonalityProfile(fakeOptions);
 
       const aiService = getAIService();
-      const story = await aiService.generateStory({
+      const storyHistory = storySegments.map((s) => s.text);
+
+      // 方案 C：使用逐抉择累加的集数（补 +1 基准 + 取整，与 calculateEpisodesSurvived 公式对齐）
+      const finalEpisodes = Math.max(
+        1,
+        Math.min(worldview.episodeMax, Math.round(episodesSurvived)),
+      );
+
+      const story = await aiService.generateEnding({
         worldview,
         profile,
-        answerSummary,
-        userImage,
-        onProgress: (text) => set({ streamingText: text }),
+        storyHistory,
+        episodesSurvived: finalEpisodes,
       });
 
-      set({ story, stage: 'result', isGenerating: false });
+      set({ profile, story, stage: 'result', isGenerating: false });
 
-      // 异步上报测试结果到 Supabase（不阻塞 UI，失败也不影响）
+      // 记录闯关完成（世界观探索成就）
+      useGameStore.getState().recordRunCompletion({ isPerfect: false });
+
+      // 集数分布埋点（用于验证分布是否均衡、低结局池是否激活）
+      recordEpisodeMetric(worldview.id, story.episodesSurvived);
+
+      // 方案 E：集数达到上限 90% 即为「传奇局」，归档供回访
+      if (story.episodesSurvived >= worldview.episodeMax * 0.9) {
+        saveLegendaryRun({
+          worldviewId: worldview.id,
+          worldviewName: worldview.name,
+          episodesSurvived: story.episodesSurvived,
+          episodeMax: worldview.episodeMax,
+          ending: story.ending,
+          primaryTrait: profile.primaryTrait,
+          createdAt: new Date().toISOString(),
+        });
+      }
+
       void saveTestResult({ worldview, profile, story });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : '生成失败，请重试',
         isGenerating: false,
-        stage: 'quiz',
-      });
-    }
-  },
-
-  generateCharacterImage: async () => {
-    const { worldview, story, userImage } = get();
-    if (!worldview || !story) return;
-
-    set({ isGeneratingImage: true, imageError: null, imageRetryAfter: null });
-
-    try {
-      const aiService = getAIService();
-      const imageUrl = await aiService.generateCharacterImage({
-        worldview,
-        characterPortrait: story.characterPortrait,
-        userImage,
-      });
-      set({ characterImage: imageUrl, isGeneratingImage: false });
-    } catch (error) {
-      const retryAfter = (error as Error & { retryAfter?: number })?.retryAfter;
-      set({
-        imageError: error instanceof Error ? error.message : '图片生成失败，请重试',
-        isGeneratingImage: false,
-        imageRetryAfter: retryAfter ? Date.now() + retryAfter * 1000 : null,
+        stage: 'story',
       });
     }
   },
@@ -224,19 +275,17 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       stage: 'worldview-select',
       worldview: null,
-      tier: 'full',
-      questionSequence: [],
-      currentQuestionIndex: 0,
-      selectedOptions: [],
-      userImage: null,
+      originSetup: null,
+      storySegments: [],
+      currentScene: null,
+      answeredCount: 0,
+      isGeneratingConsequence: false,
+      selectedTraitHistory: [],
+      episodesSurvived: 1,
       profile: null,
       story: null,
       isGenerating: false,
       error: null,
       streamingText: '',
-      characterImage: null,
-      isGeneratingImage: false,
-      imageError: null,
-      imageRetryAfter: null,
     }),
 }));

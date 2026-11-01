@@ -3,6 +3,9 @@ import { useAppStore } from '../../store/useAppStore';
 import { ShareCard } from '../ShareCard/ShareCard';
 import { Leaderboard } from '../Leaderboard/Leaderboard';
 import { TRAIT_LABELS } from '../../types';
+import { mapEpisodesToSeason } from '../../utils/personality';
+import { getLegendaryRuns, type LegendaryRun } from '../../lib/storage';
+import { getAIService } from '../../services/aiService';
 
 function useCountUp(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
@@ -22,57 +25,56 @@ function useCountUp(target: number, duration = 1200) {
   return value;
 }
 
-/**
- * 倒计时 Hook：根据目标时间戳返回剩余秒数，倒计时结束时触发 onComplete
- */
-function useCountdown(targetTime: number | null, onComplete?: () => void) {
-  const [remaining, setRemaining] = useState(0);
-
-  useEffect(() => {
-    if (!targetTime) {
-      setRemaining(0);
-      return;
-    }
-
-    const update = () => {
-      const diff = Math.max(0, Math.ceil((targetTime - Date.now()) / 1000));
-      setRemaining(diff);
-      if (diff <= 0) {
-        onComplete?.();
-      }
-    };
-
-    update();
-    const timer = setInterval(update, 1000);
-    return () => clearInterval(timer);
-  }, [targetTime, onComplete]);
-
-  return remaining;
-}
-
 export function ResultView() {
   const {
     worldview,
     story,
     profile,
+    originSetup,
+    selectedTraitHistory,
     reset,
     setStage,
-    characterImage,
-    isGeneratingImage,
-    imageError,
-    imageRetryAfter,
-    generateCharacterImage,
   } = useAppStore();
   const displayEpisodes = useCountUp(story?.episodesSurvived ?? 0);
 
-  // 限流倒计时，归零后自动重试
-  const retryCountdown = useCountdown(imageRetryAfter, () => {
-    if (imageRetryAfter && !characterImage && !isGeneratingImage) {
-      generateCharacterImage();
-    }
-  });
+  // 角色形象图（基于出身三维度 + 剧情选择轨迹生成）
+  const [characterImage, setCharacterImage] = useState<string | null>(null);
+  const [isImageLoading, setIsImageLoading] = useState(false);
+
+  useEffect(() => {
+    if (!worldview || !originSetup) return;
+    let cancelled = false;
+    setIsImageLoading(true);
+    getAIService()
+      .generateOriginImage({
+        worldview,
+        origin: originSetup,
+        traitHistory: selectedTraitHistory as never,
+      })
+      .then((url) => {
+        if (!cancelled) {
+          setCharacterImage(url);
+          setIsImageLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setIsImageLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [worldview, originSetup, selectedTraitHistory]);
 
   if (!story || !profile) return null;
+
+  // 集数 → 季映射
+  const seasonInfo = worldview
+    ? mapEpisodesToSeason(story.episodesSurvived, worldview.seasons)
+    : null;
+
+  // 传奇局归档（方案 E）
+  const [legendaryRuns, setLegendaryRuns] = useState<LegendaryRun[]>([]);
+  useEffect(() => {
+    setLegendaryRuns(getLegendaryRuns());
+  }, [story]);
 
   return (
     <div className="min-h-screen px-4 py-8 relative overflow-hidden">
@@ -124,9 +126,31 @@ export function ResultView() {
               {TRAIT_LABELS[profile.secondaryTrait]}
             </span>
           </div>
+
+          {/* 季信息 */}
+          {seasonInfo && (
+            <div className="mt-5 max-w-md mx-auto">
+              <div className="flex items-center justify-between text-xs text-text-secondary mb-1.5">
+                <span className="font-medium" style={{ color: 'var(--color-primary)' }}>
+                  第 {seasonInfo.index + 1} 季 · {seasonInfo.season.name}
+                </span>
+                <span>{story.episodesSurvived} / {worldview?.episodeMax} 集</span>
+              </div>
+              {/* 全剧进度条 */}
+              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-card-border)' }}>
+                <div
+                  className="h-full rounded-full transition-all duration-1000"
+                  style={{
+                    width: `${(story.episodesSurvived / (worldview?.episodeMax ?? 80)) * 100}%`,
+                    background: 'linear-gradient(90deg, var(--color-primary), var(--color-accent))',
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* 专属角色画像 */}
+        {/* 专属角色画像（出身+天赋+性格+剧情轨迹生成的形象图） */}
         <div
           className="card p-5 mb-5 animate-slide-up"
           style={{
@@ -136,7 +160,30 @@ export function ResultView() {
         >
           <p className="text-sm font-bold mb-3" style={{ color: 'var(--color-primary)' }}>🎭 你的专属角色画像</p>
 
-          {/* 角色名 */}
+          {/* 角色形象图 */}
+          <div className="relative w-full max-w-[200px] mx-auto mb-4 rounded-xl overflow-hidden flex items-center justify-center"
+            style={{
+              aspectRatio: '2 / 3',
+              background: 'linear-gradient(135deg, var(--color-primary)15, var(--color-accent)25)',
+            }}>
+            {isImageLoading && (
+              <div className="flex flex-col items-center gap-2 text-text-secondary">
+                <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin"
+                  style={{ borderColor: 'var(--color-primary) transparent transparent transparent' }} />
+                <p className="text-xs">正在生成角色形象…</p>
+              </div>
+            )}
+            {!isImageLoading && characterImage && (
+              <img src={characterImage} alt="角色形象" className="w-full h-full object-cover" />
+            )}
+            {!isImageLoading && !characterImage && (
+              <div className="flex flex-col items-center gap-2 text-text-secondary px-4 text-center">
+                <span className="text-3xl">🖼️</span>
+                <p className="text-xs">形象生成中…</p>
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-3 mb-4">
             <div
               className="w-14 h-14 rounded-full flex items-center justify-center text-2xl flex-shrink-0"
@@ -153,7 +200,6 @@ export function ResultView() {
             </div>
           </div>
 
-          {/* 外貌 + 背景 */}
           <div className="space-y-2 mb-4">
             <p className="text-sm text-text-secondary leading-relaxed">
               <span className="font-medium text-text">外貌：</span>{story.characterPortrait.appearance}
@@ -163,7 +209,6 @@ export function ResultView() {
             </p>
           </div>
 
-          {/* 性格标签 */}
           <div className="flex flex-wrap gap-2">
             {story.characterPortrait.personalityTags.map((tag, i) => (
               <span
@@ -181,84 +226,6 @@ export function ResultView() {
           </div>
         </div>
 
-        {/* 专属角色图片生成 */}
-        <div
-          className="card p-5 mb-5 animate-slide-up"
-          style={{
-            background: `linear-gradient(135deg, var(--color-accent)15, var(--color-card-bg))`,
-            borderLeft: '4px solid var(--color-accent)',
-            animationDelay: '0.05s',
-          }}
-        >
-          <p className="text-sm font-bold mb-3" style={{ color: 'var(--color-accent)' }}>🖼️ 你的专属角色形象</p>
-
-          {characterImage ? (
-            <div className="space-y-3">
-              <img
-                src={characterImage}
-                alt={`${story.characterPortrait.name} 的角色形象`}
-                className="w-full rounded-lg shadow-lg"
-                style={{ aspectRatio: '3/4', objectFit: 'cover' }}
-              />
-              {imageError && (
-                <div className="text-center">
-                  <p className="text-sm" style={{ color: '#e94560' }}>{imageError}</p>
-                  {imageRetryAfter && retryCountdown > 0 && (
-                    <p className="text-xs text-text-muted mt-1">⏳ {retryCountdown} 秒后自动重试...</p>
-                  )}
-                </div>
-              )}
-              <button
-                onClick={generateCharacterImage}
-                disabled={isGeneratingImage || (imageRetryAfter !== null && retryCountdown > 0)}
-                className="btn-secondary w-full text-sm disabled:opacity-50"
-              >
-                {isGeneratingImage ? '🎨 重新生成中...' : imageRetryAfter && retryCountdown > 0 ? `⏳ 等待 ${retryCountdown}s` : '🔄 重新生成角色图片'}
-              </button>
-            </div>
-          ) : isGeneratingImage ? (
-            <div className="flex flex-col items-center justify-center py-10">
-              <div className="relative w-16 h-16 mb-4">
-                <div
-                  className="absolute inset-0 rounded-full border-4 border-transparent animate-spin"
-                  style={{ borderTopColor: 'var(--color-accent)', borderRightColor: 'var(--color-accent)' }}
-                />
-                <div
-                  className="absolute inset-2 rounded-full border-4 border-transparent animate-spin"
-                  style={{ borderBottomColor: 'var(--color-primary)', animationDirection: 'reverse', animationDuration: '1.2s' }}
-                />
-              </div>
-              <p className="text-text-secondary text-sm">🎨 AI 正在为你绘制专属角色形象...</p>
-              <p className="text-text-muted text-xs mt-1">结合你的外貌特征和角色设定，约需 10-30 秒</p>
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <div className="text-5xl mb-3">🎨</div>
-              <p className="text-text-secondary text-sm mb-4">
-                点击下方按钮，AI 将结合你的外貌特征和角色设定<br />
-                为你生成一张专属的角色形象图片
-              </p>
-              {imageError && (
-                <div className="mb-3">
-                  <p className="text-sm" style={{ color: '#e94560' }}>{imageError}</p>
-                  {imageRetryAfter && retryCountdown > 0 && (
-                    <p className="text-xs text-text-muted mt-1">
-                      ⏳ {retryCountdown} 秒后自动重试...
-                    </p>
-                  )}
-                </div>
-              )}
-              <button
-                onClick={generateCharacterImage}
-                disabled={isGeneratingImage || (imageRetryAfter !== null && retryCountdown > 0)}
-                className="btn-primary disabled:opacity-50"
-              >
-                {isGeneratingImage ? '生成中...' : imageRetryAfter && retryCountdown > 0 ? `⏳ 等待 ${retryCountdown}s` : '✨ 生成我的角色图片'}
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* 剧情 */}
         <div className="card p-6 mb-5 animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <h2 className="text-lg font-serif font-bold text-text mb-4 flex items-center gap-2">
@@ -266,7 +233,7 @@ export function ResultView() {
           </h2>
           <div className="space-y-4">
             {story.story.map((paragraph, i) => (
-              <p key={i} className="text-text-secondary leading-relaxed" style={{ animationDelay: `${0.15 + i * 0.1}s` }}>
+              <p key={i} className="text-text-secondary leading-relaxed animate-slide-up" style={{ animationDelay: `${0.15 + i * 0.1}s` }}>
                 {paragraph}
               </p>
             ))}
@@ -300,6 +267,62 @@ export function ResultView() {
         {/* 排行榜 */}
         {worldview && <Leaderboard worldviewId={worldview.id} />}
 
+        {/* 传奇之路归档（集数达到世界观上限 90% 的对局） */}
+        {legendaryRuns.length > 0 && (
+          <div
+            className="card p-5 mb-6 animate-slide-up"
+            style={{
+              background: 'linear-gradient(135deg, var(--color-accent)12, var(--color-card-bg))',
+              borderLeft: '4px solid var(--color-accent)',
+              animationDelay: '0.3s',
+            }}
+          >
+            <h2 className="text-lg font-serif font-bold text-text mb-4 flex items-center gap-2">
+              🏆 我的传奇之路
+              <span className="text-xs font-normal text-text-secondary">（共 {legendaryRuns.length} 局）</span>
+            </h2>
+            <div className="space-y-3">
+              {legendaryRuns.slice(0, 5).map((run, i) => {
+                const dateStr = new Date(run.createdAt).toLocaleDateString('zh-CN', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                });
+                const endingPreview = run.ending.length > 36
+                  ? run.ending.slice(0, 36) + '…'
+                  : run.ending;
+                return (
+                  <div
+                    key={`${run.worldviewId}-${run.createdAt}-${i}`}
+                    className="rounded-lg p-3"
+                    style={{ background: 'var(--color-card-bg)', border: '1px solid var(--color-card-border)' }}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-bold text-text">{run.worldviewName}</span>
+                        <span
+                          className="px-2 py-0.5 rounded-full text-xs font-medium"
+                          style={{ background: 'var(--color-accent)22', color: 'var(--color-accent)' }}
+                        >
+                          {run.episodesSurvived} / {run.episodeMax} 集
+                        </span>
+                        <span
+                          className="px-2 py-0.5 rounded-full text-xs"
+                          style={{ background: 'var(--color-primary-light)33', color: 'var(--color-primary)' }}
+                        >
+                          {TRAIT_LABELS[run.primaryTrait as keyof typeof TRAIT_LABELS]}
+                        </span>
+                      </div>
+                      <span className="text-xs text-text-muted">{dateStr}</span>
+                    </div>
+                    <p className="text-sm text-text-secondary leading-relaxed">{endingPreview}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* 付费解锁提示 */}
         <div
           className="card p-6 mb-6 text-center animate-slide-up"
@@ -323,7 +346,7 @@ export function ResultView() {
             📤 分享结果
           </button>
           <button onClick={reset} className="btn-primary flex-1">
-            🔄 再测一次
+            🔄 再玩一次
           </button>
         </div>
       </div>

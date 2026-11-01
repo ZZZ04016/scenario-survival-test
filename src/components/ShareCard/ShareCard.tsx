@@ -1,5 +1,6 @@
 import { useAppStore } from '../../store/useAppStore';
 import { TRAIT_LABELS } from '../../types';
+import { mapEpisodesToSeason } from '../../utils/personality';
 
 /**
  * 分享卡组件
@@ -11,6 +12,7 @@ export function ShareCard() {
   if (!story || !profile || !worldview) return null;
 
   const cardColor = story.shareColor || worldview.accentColor;
+  const seasonInfo = mapEpisodesToSeason(story.episodesSurvived, worldview.seasons);
 
   return (
     <div className="card overflow-hidden" style={{ borderColor: cardColor }}>
@@ -34,6 +36,9 @@ export function ShareCard() {
           {story.episodesSurvived}
         </p>
         <p className="text-sm text-text-muted">集</p>
+        <p className="text-xs mt-2" style={{ color: cardColor }}>
+          第 {seasonInfo.index + 1} 季 · {seasonInfo.season.name}
+        </p>
 
         <div className="mt-5 pt-5 border-t" style={{ borderColor: 'var(--color-card-border)' }}>
           <p className="text-xs text-text-muted mb-2">性格特质</p>

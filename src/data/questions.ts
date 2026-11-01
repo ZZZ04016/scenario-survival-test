@@ -1,10 +1,12 @@
 import type { PersonalityTrait, QuizQuestion, WorldviewId } from '../types';
 
-// 深宫风云（宫斗）题库 - 15 道题（动态选 10 题）
+// 深宫风云（宫斗）题库 - 20 道题（动态选 10 题）
 const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 1,
     primaryTrait: 'cautious',
+    type: 'choice',
+    knowledgePointId: 'risk-assessment',
     text: '你刚入宫，同住的宫女偷走了你的玉镯，你会？',
     options: [
       { id: 'a', text: '忍气吞声，暗中观察她的靠山', trait: 'cautious' },
@@ -16,6 +18,8 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 2,
     primaryTrait: 'scheming',
+    type: 'choice',
+    knowledgePointId: 'power-dynamics',
     text: '皇后娘娘的茶里被人下了药，你恰好撞见，你会？',
     options: [
       { id: 'a', text: '装作没看见，多一事不如少一事', trait: 'cautious' },
@@ -27,6 +31,9 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 3,
     primaryTrait: 'ambitious',
+    type: 'scenario',
+    knowledgePointId: 'opportunity-grasp',
+    scenario: '你在宫中的地位尚不稳固，任何一次晋升都可能引发新一轮的倾轧。',
     text: '皇上偶然注意到你，准备晋你的位分，但宠妃警告你别妄想，你会？',
     options: [
       { id: 'a', text: '婉拒圣意，明哲保身', trait: 'cautious' },
@@ -38,6 +45,8 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 4,
     primaryTrait: 'scheming',
+    type: 'choice',
+    knowledgePointId: 'power-dynamics',
     text: '你的贴身宫女被发现是别人安插的眼线，你会？',
     options: [
       { id: 'a', text: '不动声色，给她传假消息', trait: 'scheming' },
@@ -49,6 +58,8 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 5,
     primaryTrait: 'decisive',
+    type: 'timed',
+    timeLimit: 15,    knowledgePointId: 'crisis-decision',
     text: '后宫选秀，新人中有一个酷似已故皇后，威胁到你的地位，你会？',
     options: [
       { id: 'a', text: '主动拉拢，结成同盟', trait: 'scheming' },
@@ -60,6 +71,8 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 6,
     primaryTrait: 'cautious',
+    type: 'choice',
+    knowledgePointId: 'risk-assessment',
     text: '你怀孕的消息被泄露，当晚就有人送来可疑的安胎药，你会？',
     options: [
       { id: 'a', text: '假装喝下，暗中让太医查验', trait: 'scheming' },
@@ -71,6 +84,9 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 7,
     primaryTrait: 'scheming',
+    type: 'scenario',
+    knowledgePointId: 'power-dynamics',
+    scenario: '太后寿宴是后宫一年一度的大事，所有人都在盯着你的一举一动。',
     text: '太后寿宴，有人陷害你偷了贡品，证据确凿，你会？',
     options: [
       { id: 'a', text: '冷静分析，找出证据漏洞反击', trait: 'scheming' },
@@ -82,6 +98,8 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 8,
     primaryTrait: 'loyal',
+    type: 'choice',
+    knowledgePointId: 'loyalty-balance',
     text: '你的好姐妹背叛了你，投靠了你的死对头，你会？',
     options: [
       { id: 'a', text: '假装不知情，利用她传递假情报', trait: 'scheming' },
@@ -93,6 +111,8 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 9,
     primaryTrait: 'ambitious',
+    type: 'choice',
+    knowledgePointId: 'opportunity-grasp',
     text: '朝中动荡，皇上有意立你的儿子为太子，但代价是你必须放弃家族，你会？',
     options: [
       { id: 'a', text: '答应，儿子的前途最重要', trait: 'ambitious' },
@@ -104,6 +124,8 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 10,
     primaryTrait: 'decisive',
+    type: 'timed',
+    timeLimit: 15,    knowledgePointId: 'crisis-decision',
     text: '最终决战，你与最大对手正面交锋，你会？',
     options: [
       { id: 'a', text: '布下天罗地网，一击必杀', trait: 'scheming' },
@@ -115,6 +137,8 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 11,
     primaryTrait: 'kind',
+    type: 'choice',
+    knowledgePointId: 'network-building',
     text: '一位失宠的老妃嫔被所有人欺负，连饭都吃不上，你会？',
     options: [
       { id: 'a', text: '偷偷给她送吃食，不落人话柄', trait: 'kind' },
@@ -126,6 +150,8 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 12,
     primaryTrait: 'cautious',
+    type: 'choice',
+    knowledgePointId: 'risk-assessment',
     text: '你无意中发现宠妃与外臣有私情的证据，你会？',
     options: [
       { id: 'a', text: '藏好证据，等关键时刻一击致命', trait: 'cautious' },
@@ -137,6 +163,9 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 13,
     primaryTrait: 'ambitious',
+    type: 'scenario',
+    knowledgePointId: 'opportunity-grasp',
+    scenario: '太后的义女身份意味着无上的荣耀，但也意味着成为众矢之的。',
     text: '太后提出收你为义女，但条件是你要远离朝政，你会？',
     options: [
       { id: 'a', text: '答应，太后义女身份尊贵', trait: 'ambitious' },
@@ -148,6 +177,8 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 14,
     primaryTrait: 'loyal',
+    type: 'choice',
+    knowledgePointId: 'loyalty-balance',
     text: '你的家族被人弹劾面临灭门，只有你能求情，但会失去圣宠，你会？',
     options: [
       { id: 'a', text: '不惜一切为家族求情', trait: 'loyal' },
@@ -159,6 +190,8 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
   {
     id: 15,
     primaryTrait: 'kind',
+    type: 'timed',
+    timeLimit: 15,    knowledgePointId: 'network-building',
     text: '你手下的小宫女犯了死罪，她求你救她，你会？',
     options: [
       { id: 'a', text: '想尽办法保她一命', trait: 'kind' },
@@ -167,13 +200,81 @@ const PALACE_QUESTIONS: QuizQuestion[] = [
       { id: 'd', text: '不管，免得受牵连', trait: 'cautious' },
     ],
   },
+  {
+    id: 16,
+    primaryTrait: 'scheming',
+    type: 'choice',
+    knowledgePointId: 'power-dynamics',
+    text: '你发现一位高位妃嫔的秘密足以扳倒她，但她对你有恩，你会？',
+    options: [
+      { id: 'a', text: '暗中留作筹码，暂不行动', trait: 'scheming' },
+      { id: 'b', text: '直接告发，换取晋升', trait: 'ambitious' },
+      { id: 'c', text: '感念恩情，装作不知', trait: 'loyal' },
+      { id: 'd', text: '静观其变，等最佳时机', trait: 'cautious' },
+    ],
+  },
+  {
+    id: 17,
+    primaryTrait: 'ambitious',
+    type: 'scenario',
+    knowledgePointId: 'opportunity-grasp',
+    scenario: '皇子夺嫡，每一步都关乎身家性命，稍有不慎便是灭顶之灾。',
+    text: '皇上病重，诸皇子夺嫡，你腹中的胎儿是皇子，你会？',
+    options: [
+      { id: 'a', text: '联合外戚，扶持儿子登基', trait: 'ambitious' },
+      { id: 'b', text: '明哲保身，不卷入夺嫡', trait: 'cautious' },
+      { id: 'c', text: '暗中布局，渔翁得利', trait: 'scheming' },
+      { id: 'd', text: '辅佐贤明的皇子，不为私利', trait: 'kind' },
+    ],
+  },
+  {
+    id: 18,
+    primaryTrait: 'decisive',
+    type: 'choice',
+    knowledgePointId: 'crisis-decision',
+    text: '你被人栽赃与侍卫有染，证据确凿，百口莫辩，你会？',
+    options: [
+      { id: 'a', text: '当场自证清白，揪出真凶', trait: 'decisive' },
+      { id: 'b', text: '先忍下来，暗中搜集证据', trait: 'cautious' },
+      { id: 'c', text: '设局反咬陷害你的人', trait: 'scheming' },
+      { id: 'd', text: '求太后主持公道', trait: 'kind' },
+    ],
+  },
+  {
+    id: 19,
+    primaryTrait: 'kind',
+    type: 'choice',
+    knowledgePointId: 'network-building',
+    text: '一位被打入冷宫的妃嫔曾救过你，如今她身患重病无人管，你会？',
+    options: [
+      { id: 'a', text: '冒险去看望她，为她请太医', trait: 'kind' },
+      { id: 'b', text: '偷偷送药，不落痕迹', trait: 'cautious' },
+      { id: 'c', text: '利用此事拉拢她的旧部', trait: 'scheming' },
+      { id: 'd', text: '怕惹祸上身，不管', trait: 'cautious' },
+    ],
+  },
+  {
+    id: 20,
+    primaryTrait: 'loyal',
+    type: 'timed',
+    timeLimit: 15,    knowledgePointId: 'loyalty-balance',
+    text: '你的兄长在前线打了败仗，朝中有人要借机灭你满门，你会？',
+    options: [
+      { id: 'a', text: '跪求皇上，以自身换家族平安', trait: 'loyal' },
+      { id: 'b', text: '暗中运作，帮兄长脱罪', trait: 'scheming' },
+      { id: 'c', text: '与家族划清界限，自保', trait: 'cautious' },
+      { id: 'd', text: '直接闯宫，据理力争', trait: 'decisive' },
+    ],
+  },
 ];
 
-// 末日求生题库 - 15 道题（动态选 10 题）
+// 末日求生题库 - 20 道题（动态选 10 题）
 const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 1,
     primaryTrait: 'decisive',
+    type: 'choice',
+    knowledgePointId: 'crisis-decision',
     text: '丧尸爆发第一天，你被困在宿舍，室友已经被咬伤，你会？',
     options: [
       { id: 'a', text: '趁他没完全变异，从窗户逃跑', trait: 'decisive' },
@@ -185,6 +286,8 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 2,
     primaryTrait: 'cautious',
+    type: 'choice',
+    knowledgePointId: 'risk-assessment',
     text: '你找到了一个超市，但里面已经有一群幸存者占着，你会？',
     options: [
       { id: 'a', text: '直接冲进去抢物资', trait: 'decisive' },
@@ -196,6 +299,9 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 3,
     primaryTrait: 'decisive',
+    type: 'scenario',
+    knowledgePointId: 'crisis-decision',
+    scenario: '末世中的队伍容不下一个可能变异的定时炸弹，所有人的目光都在你身上。',
     text: '你的队伍里有人受伤发烧，可能会变异，你会？',
     options: [
       { id: 'a', text: '立刻把他赶出队伍', trait: 'decisive' },
@@ -207,6 +313,8 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 4,
     primaryTrait: 'scheming',
+    type: 'choice',
+    knowledgePointId: 'power-dynamics',
     text: '你发现军方的避难所，但只接收有技能的人，你会？',
     options: [
       { id: 'a', text: '如实说自己的能力', trait: 'kind' },
@@ -218,6 +326,8 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 5,
     primaryTrait: 'loyal',
+    type: 'timed',
+    timeLimit: 15,    knowledgePointId: 'loyalty-balance',
     text: '半夜营地被丧尸围攻，你会？',
     options: [
       { id: 'a', text: '带头冲锋，打开缺口', trait: 'decisive' },
@@ -229,6 +339,8 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 6,
     primaryTrait: 'kind',
+    type: 'choice',
+    knowledgePointId: 'network-building',
     text: '你遇到一个落单的小女孩，她的哭声可能引来丧尸，你会？',
     options: [
       { id: 'a', text: '捂住她的嘴带她一起走', trait: 'decisive' },
@@ -240,6 +352,9 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 7,
     primaryTrait: 'kind',
+    type: 'scenario',
+    knowledgePointId: 'network-building',
+    scenario: '末世物资极度匮乏，一次藏匿就可能决定队伍的生死存亡，信任与利益的天平正在倾斜。',
     text: '你发现了大量食物，但你的同伴不知道，你会？',
     options: [
       { id: 'a', text: '告诉同伴，公平分配', trait: 'kind' },
@@ -251,6 +366,8 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 8,
     primaryTrait: 'cautious',
+    type: 'choice',
+    knowledgePointId: 'risk-assessment',
     text: '有人告诉你有一个安全的幸存者基地，但需要走三天危险的路，你会？',
     options: [
       { id: 'a', text: '立刻出发，越早到越安全', trait: 'decisive' },
@@ -262,6 +379,8 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 9,
     primaryTrait: 'ambitious',
+    type: 'choice',
+    knowledgePointId: 'opportunity-grasp',
     text: '你的队伍首领变得越来越独裁，你会？',
     options: [
       { id: 'a', text: '联合其他人推翻他', trait: 'ambitious' },
@@ -273,6 +392,8 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 10,
     primaryTrait: 'loyal',
+    type: 'timed',
+    timeLimit: 15,    knowledgePointId: 'loyalty-balance',
     text: '最后关头，只剩你和一个同伴，食物只够一个人活，你会？',
     options: [
       { id: 'a', text: '平分，一起活到最后一刻', trait: 'loyal' },
@@ -284,6 +405,8 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 11,
     primaryTrait: 'scheming',
+    type: 'choice',
+    knowledgePointId: 'power-dynamics',
     text: '你发现了一辆装满物资的卡车，但车主还活着，你会？',
     options: [
       { id: 'a', text: '杀了他，独占物资', trait: 'decisive' },
@@ -295,6 +418,8 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 12,
     primaryTrait: 'cautious',
+    type: 'choice',
+    knowledgePointId: 'risk-assessment',
     text: '广播说某城市有解药，但沿途全是丧尸，你会？',
     options: [
       { id: 'a', text: '立刻出发，解药是唯一希望', trait: 'decisive' },
@@ -306,6 +431,9 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 13,
     primaryTrait: 'ambitious',
+    type: 'scenario',
+    knowledgePointId: 'opportunity-grasp',
+    scenario: '营地首领的位置诱人但危险，坐上它意味着承担所有人的生死。',
     text: '你有机会成为幸存者营地的新首领，但需要赶走现任首领，你会？',
     options: [
       { id: 'a', text: '拉拢人心，发动政变', trait: 'ambitious' },
@@ -317,6 +445,8 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 14,
     primaryTrait: 'loyal',
+    type: 'choice',
+    knowledgePointId: 'loyalty-balance',
     text: '你的同伴为了救你受了重伤，会拖累整个队伍，你会？',
     options: [
       { id: 'a', text: '背着他一起走，绝不抛弃', trait: 'loyal' },
@@ -328,6 +458,8 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
   {
     id: 15,
     primaryTrait: 'kind',
+    type: 'timed',
+    timeLimit: 15,    knowledgePointId: 'network-building',
     text: '一群老弱妇孺求你收留，但你的物资也不多了，你会？',
     options: [
       { id: 'a', text: '收留他们，一起想办法', trait: 'kind' },
@@ -336,13 +468,81 @@ const APOCALYPSE_QUESTIONS: QuizQuestion[] = [
       { id: 'd', text: '利用他们帮你干活换取食物', trait: 'scheming' },
     ],
   },
+  {
+    id: 16,
+    primaryTrait: 'scheming',
+    type: 'choice',
+    knowledgePointId: 'power-dynamics',
+    text: '你发现一个幸存者基地，但首领是个残暴的人，你会？',
+    options: [
+      { id: 'a', text: '暗中拉拢人手，伺机推翻他', trait: 'scheming' },
+      { id: 'b', text: '直接离开，不冒险', trait: 'cautious' },
+      { id: 'c', text: '正面挑战他的权威', trait: 'decisive' },
+      { id: 'd', text: '试图感化他，改变基地风气', trait: 'kind' },
+    ],
+  },
+  {
+    id: 17,
+    primaryTrait: 'cautious',
+    type: 'scenario',
+    knowledgePointId: 'risk-assessment',
+    scenario: '末世中每一次求救都可能是陷阱，但置之不理又可能让无辜者丧命，这是对人性的考验。',
+    text: '你捡到一台还能用的对讲机，里面传来求救信号，你会？',
+    options: [
+      { id: 'a', text: '先监听几天，确认不是陷阱再回应', trait: 'cautious' },
+      { id: 'b', text: '立刻回应，赶去救人', trait: 'kind' },
+      { id: 'c', text: '利用信号定位，抢夺他们的物资', trait: 'scheming' },
+      { id: 'd', text: '关掉对讲机，多一事不如少一事', trait: 'decisive' },
+    ],
+  },
+  {
+    id: 18,
+    primaryTrait: 'ambitious',
+    type: 'choice',
+    knowledgePointId: 'opportunity-grasp',
+    text: '你发现了一处军火库，但看守它的是一群武装分子，你会？',
+    options: [
+      { id: 'a', text: '招兵买马，武力夺取', trait: 'ambitious' },
+      { id: 'b', text: '暗中观察，找机会偷', trait: 'scheming' },
+      { id: 'c', text: '放弃，太危险了', trait: 'cautious' },
+      { id: 'd', text: '尝试和他们谈判交易', trait: 'kind' },
+    ],
+  },
+  {
+    id: 19,
+    primaryTrait: 'loyal',
+    type: 'choice',
+    knowledgePointId: 'loyalty-balance',
+    text: '你的同伴被敌对势力抓走，对方要你用全部物资换人，你会？',
+    options: [
+      { id: 'a', text: '毫不犹豫，拿物资去换人', trait: 'loyal' },
+      { id: 'b', text: '设局救人，不给物资', trait: 'scheming' },
+      { id: 'c', text: '放弃同伴，保住物资', trait: 'cautious' },
+      { id: 'd', text: '带齐人马，硬闯救人', trait: 'decisive' },
+    ],
+  },
+  {
+    id: 20,
+    primaryTrait: 'decisive',
+    type: 'timed',
+    timeLimit: 15,    knowledgePointId: 'crisis-decision',
+    text: '你发现水源被污染了，但所有人都不知道，你会？',
+    options: [
+      { id: 'a', text: '立刻封锁水源，告知所有人', trait: 'decisive' },
+      { id: 'b', text: '先自己找干净水源，再告诉别人', trait: 'cautious' },
+      { id: 'c', text: '只告诉自己信任的人', trait: 'scheming' },
+      { id: 'd', text: '默默净化水源，不声张', trait: 'kind' },
+    ],
+  },
 ];
 
-// 修仙问道题库 - 15 道题（动态选 10 题）
+// 修仙问道题库 - 20 道题（动态选 10 题）
 const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 1,
     primaryTrait: 'decisive',
+    type: 'choice',
+    knowledgePointId: 'crisis-decision',
     text: '你检测灵根，结果是五灵根（资质最差），你会？',
     options: [
       { id: 'a', text: '不服输，用十倍努力修炼', trait: 'decisive' },
@@ -354,6 +554,8 @@ const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 2,
     primaryTrait: 'cautious',
+    type: 'choice',
+    knowledgePointId: 'risk-assessment',
     text: '宗门大比，你遇到实力远超你的对手，你会？',
     options: [
       { id: 'a', text: '拼死一战，虽败犹荣', trait: 'decisive' },
@@ -365,6 +567,9 @@ const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 3,
     primaryTrait: 'ambitious',
+    type: 'scenario',
+    knowledgePointId: 'opportunity-grasp',
+    scenario: '上古秘境机缘与危险并存，同门的觊觎让局势更加复杂。',
     text: '你发现了一个上古秘境，但同门也知道了，你会？',
     options: [
       { id: 'a', text: '独自前往，独占机缘', trait: 'ambitious' },
@@ -376,6 +581,8 @@ const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 4,
     primaryTrait: 'scheming',
+    type: 'choice',
+    knowledgePointId: 'power-dynamics',
     text: '你走火入魔的边缘，魔修诱惑你转修魔道，你会？',
     options: [
       { id: 'a', text: '咬牙坚持正道', trait: 'decisive' },
@@ -387,6 +594,8 @@ const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 5,
     primaryTrait: 'loyal',
+    type: 'timed',
+    timeLimit: 15,    knowledgePointId: 'loyalty-balance',
     text: '你的师父被陷害，要被逐出师门，你会？',
     options: [
       { id: 'a', text: '为师父鸣不平，对抗宗门', trait: 'loyal' },
@@ -398,6 +607,8 @@ const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 6,
     primaryTrait: 'ambitious',
+    type: 'choice',
+    knowledgePointId: 'opportunity-grasp',
     text: '你得到一株万年灵药，但服用就会树敌无数，你会？',
     options: [
       { id: 'a', text: '立刻服用，提升实力再说', trait: 'ambitious' },
@@ -409,6 +620,9 @@ const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 7,
     primaryTrait: 'loyal',
+    type: 'scenario',
+    knowledgePointId: 'loyalty-balance',
+    scenario: '宗门规矩森严，渡劫失败按律当废修为，但师兄与你情同手足，规矩与情义难以两全。',
     text: '渡劫失败的师兄求你帮他隐瞒，否则会被废修为，你会？',
     options: [
       { id: 'a', text: '帮他隐瞒，讲义气', trait: 'loyal' },
@@ -420,6 +634,8 @@ const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 8,
     primaryTrait: 'decisive',
+    type: 'choice',
+    knowledgePointId: 'crisis-decision',
     text: '魔修攻城，你的实力不够，你会？',
     options: [
       { id: 'a', text: '冲上去和魔修拼命', trait: 'decisive' },
@@ -431,6 +647,8 @@ const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 9,
     primaryTrait: 'ambitious',
+    type: 'choice',
+    knowledgePointId: 'opportunity-grasp',
     text: '你发现了成仙的秘密，但需要献祭好友，你会？',
     options: [
       { id: 'a', text: '拒绝，成仙不如有情', trait: 'loyal' },
@@ -442,6 +660,8 @@ const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 10,
     primaryTrait: 'ambitious',
+    type: 'timed',
+    timeLimit: 15,    knowledgePointId: 'opportunity-grasp',
     text: '飞升在即，你发现飞升后所有人都会忘记你，你会？',
     options: [
       { id: 'a', text: '毅然飞升，大道无情', trait: 'ambitious' },
@@ -453,6 +673,8 @@ const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 11,
     primaryTrait: 'scheming',
+    type: 'choice',
+    knowledgePointId: 'power-dynamics',
     text: '你的同门得到了一本顶级功法，只传嫡传弟子，你会？',
     options: [
       { id: 'a', text: '偷来自己修炼', trait: 'scheming' },
@@ -464,6 +686,8 @@ const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 12,
     primaryTrait: 'cautious',
+    type: 'choice',
+    knowledgePointId: 'risk-assessment',
     text: '你得到一颗来历不明的丹药，据说能提升修为但有毒，你会？',
     options: [
       { id: 'a', text: '直接服下，富贵险中求', trait: 'ambitious' },
@@ -475,6 +699,9 @@ const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 13,
     primaryTrait: 'kind',
+    type: 'scenario',
+    knowledgePointId: 'network-building',
+    scenario: '禁忌功法威力无穷，但走火入魔的风险如影随形。',
     text: '一只受伤的妖狐向你求救，但妖狐是宗门通缉的妖兽，你会？',
     options: [
       { id: 'a', text: '救它，不忍心看它死', trait: 'kind' },
@@ -486,6 +713,8 @@ const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 14,
     primaryTrait: 'loyal',
+    type: 'choice',
+    knowledgePointId: 'loyalty-balance',
     text: '你的道侣被邪修抓走，要求你用宗门至宝换人，你会？',
     options: [
       { id: 'a', text: '偷至宝去换人', trait: 'loyal' },
@@ -497,12 +726,80 @@ const CULTIVATION_QUESTIONS: QuizQuestion[] = [
   {
     id: 15,
     primaryTrait: 'ambitious',
+    type: 'timed',
+    timeLimit: 15,    knowledgePointId: 'opportunity-grasp',
     text: '你有机会拜一位大佬为师，但他要你废掉现有的修为重修，你会？',
     options: [
       { id: 'a', text: '废掉重修，大佬的前途更光明', trait: 'ambitious' },
       { id: 'b', text: '拒绝，多年修为不能白费', trait: 'cautious' },
       { id: 'c', text: '假装答应，偷偷保留修为', trait: 'scheming' },
       { id: 'd', text: '犹豫，想找两全办法', trait: 'kind' },
+    ],
+  },
+  {
+    id: 16,
+    primaryTrait: 'scheming',
+    type: 'choice',
+    knowledgePointId: 'power-dynamics',
+    text: '你的道侣身怀绝世体质，各大宗门都想抢夺，你会？',
+    options: [
+      { id: 'a', text: '利用她的体质与宗门谈条件', trait: 'scheming' },
+      { id: 'b', text: '带她远走高飞，隐居山林', trait: 'loyal' },
+      { id: 'c', text: '主动献给最强宗门，换取资源', trait: 'ambitious' },
+      { id: 'd', text: '死守她，与天下为敌', trait: 'decisive' },
+    ],
+  },
+  {
+    id: 17,
+    primaryTrait: 'cautious',
+    type: 'scenario',
+    knowledgePointId: 'risk-assessment',
+    scenario: '禁忌功法的诱惑在于它能让你一夜之间超越同辈，但代价可能是入魔。',
+    text: '你得到一本无名古籍，上面记载着禁忌功法，修炼可能入魔，你会？',
+    options: [
+      { id: 'a', text: '先研究透彻，确认安全再修炼', trait: 'cautious' },
+      { id: 'b', text: '直接修炼，富贵险中求', trait: 'ambitious' },
+      { id: 'c', text: '毁掉古籍，不碰禁忌', trait: 'kind' },
+      { id: 'd', text: '献给宗门，换取功劳', trait: 'scheming' },
+    ],
+  },
+  {
+    id: 18,
+    primaryTrait: 'decisive',
+    type: 'choice',
+    knowledgePointId: 'crisis-decision',
+    text: '宗门被魔道围攻，掌门让你带弟子撤退，自己断后，你会？',
+    options: [
+      { id: 'a', text: '遵从命令，带弟子撤退保存实力', trait: 'cautious' },
+      { id: 'b', text: '违抗命令，留下来和掌门并肩作战', trait: 'loyal' },
+      { id: 'c', text: '设下大阵，与宗门共存亡', trait: 'decisive' },
+      { id: 'd', text: '暗中转移宗门至宝，再回来救人', trait: 'scheming' },
+    ],
+  },
+  {
+    id: 19,
+    primaryTrait: 'kind',
+    type: 'choice',
+    knowledgePointId: 'network-building',
+    text: '一只受伤的妖兽幼崽向你求救，但它是吞天兽的后代，长大后会为祸人间，你会？',
+    options: [
+      { id: 'a', text: '救它，养大后引导它向善', trait: 'kind' },
+      { id: 'b', text: '杀了它，以绝后患', trait: 'decisive' },
+      { id: 'c', text: '收养它，作为自己的战力', trait: 'ambitious' },
+      { id: 'd', text: '不救也不杀，放它自生自灭', trait: 'cautious' },
+    ],
+  },
+  {
+    id: 20,
+    primaryTrait: 'loyal',
+    type: 'timed',
+    timeLimit: 15,    knowledgePointId: 'loyalty-balance',
+    text: '你的师尊走火入魔，开始滥杀无辜，宗门要你亲手杀了他，你会？',
+    options: [
+      { id: 'a', text: '拼死困住师尊，寻找挽救之法', trait: 'loyal' },
+      { id: 'b', text: '含泪出手，了结师尊痛苦', trait: 'decisive' },
+      { id: 'c', text: '带师尊逃入深山，躲避宗门', trait: 'kind' },
+      { id: 'd', text: '利用此事夺取宗门大权', trait: 'scheming' },
     ],
   },
 ];
@@ -518,19 +815,44 @@ export function getQuestions(worldviewId: WorldviewId): QuizQuestion[] {
 }
 
 /**
- * 动态分支选题算法
- * 根据用户已选选项的特质分布，从题库池中选出下一道题
- * 策略：优先选择考察"当前得分最低特质"的题目，确保不同答题路径获得差异化题目序列
+ * 动态分支选题算法（个性化学习路径）
+ * 综合三重维度选题：
+ * 1. 知识点掌握度：优先推送用户薄弱（掌握度<60%）或未接触的知识点
+ * 2. 特质均衡：确保覆盖考察各特质的题目，避免单一化
+ * 3. 随机性：加入随机扰动，避免完全确定的路径
  */
 export function selectNextQuestion(
   pool: QuizQuestion[],
   answeredIds: number[],
   selectedOptions: { trait: PersonalityTrait }[],
+  mastery?: Record<string, { mastery: number }>,
 ): QuizQuestion | null {
   const remaining = pool.filter((q) => !answeredIds.includes(q.id));
   if (remaining.length === 0) return null;
 
-  // 计算当前各特质得分
+  // 维度1：知识点掌握度 —— 找出薄弱知识点
+  if (mastery) {
+    const weakKpQuestions = remaining.filter((q) => {
+      const m = mastery[q.knowledgePointId];
+      return !m || m.mastery < 0.6; // 未掌握或掌握度低于60%
+    });
+    if (weakKpQuestions.length > 0) {
+      // 在薄弱知识点题目中，再按特质均衡筛选
+      return pickByTraitBalance(weakKpQuestions, selectedOptions);
+    }
+  }
+
+  // 维度2&3：特质均衡 + 随机性
+  return pickByTraitBalance(remaining, selectedOptions);
+}
+
+/**
+ * 按特质均衡选题：优先选择考察当前得分最低特质的题目
+ */
+function pickByTraitBalance(
+  candidates: QuizQuestion[],
+  selectedOptions: { trait: PersonalityTrait }[],
+): QuizQuestion {
   const traitScores: Record<PersonalityTrait, number> = {
     cautious: 0,
     decisive: 0,
@@ -543,17 +865,14 @@ export function selectNextQuestion(
     traitScores[opt.trait] += 1;
   }
 
-  // 找出当前得分最低的特质
   const sortedTraits = Object.entries(traitScores).sort((a, b) => a[1] - b[1]);
   const lowestTrait = sortedTraits[0][0] as PersonalityTrait;
 
-  // 优先选择考察最低特质的题目，若没有则随机
-  const preferred = remaining.filter((q) => q.primaryTrait === lowestTrait);
-  const candidates = preferred.length > 0 ? preferred : remaining;
+  const preferred = candidates.filter((q) => q.primaryTrait === lowestTrait);
+  const pool = preferred.length > 0 ? preferred : candidates;
 
-  // 从候选中随机选一道（加入随机性，避免完全确定的路径）
-  const randomIndex = Math.floor(Math.random() * candidates.length);
-  return candidates[randomIndex];
+  const randomIndex = Math.floor(Math.random() * pool.length);
+  return pool[randomIndex];
 }
 
 /**

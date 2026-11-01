@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import type { QuizOption } from '../../types';
+import type { QuizOption, Season } from '../../types';
 import {
   calculatePersonalityProfile,
   calculateEpisodesSurvived,
+  mapEpisodesToSeason,
 } from '../personality';
 
 const makeOption = (trait: QuizOption['trait']): QuizOption => ({
@@ -94,5 +95,76 @@ describe('calculateEpisodesSurvived', () => {
     const episodes = calculateEpisodesSurvived(profile);
     expect(episodes).toBeGreaterThanOrEqual(1);
     expect(episodes).toBeLessThanOrEqual(80);
+  });
+
+  it('自定义 episodeMax 时集数应在 [1, episodeMax] 范围内', () => {
+    const profile = calculatePersonalityProfile([
+      makeOption('scheming'),
+      makeOption('scheming'),
+      makeOption('cautious'),
+      makeOption('cautious'),
+    ]);
+
+    // 末日题材上限 24
+    const apocEpisodes = calculateEpisodesSurvived(profile, 24);
+    expect(apocEpisodes).toBeGreaterThanOrEqual(1);
+    expect(apocEpisodes).toBeLessThanOrEqual(24);
+
+    // 修仙题材上限 120
+    const culEpisodes = calculateEpisodesSurvived(profile, 120);
+    expect(culEpisodes).toBeGreaterThanOrEqual(1);
+    expect(culEpisodes).toBeLessThanOrEqual(120);
+  });
+
+  it('相同性格在不同上限下应保持相对位置（权谋型接近上限）', () => {
+    const profile = calculatePersonalityProfile([
+      makeOption('scheming'),
+      makeOption('scheming'),
+      makeOption('cautious'),
+      makeOption('cautious'),
+    ]);
+
+    const ep80 = calculateEpisodesSurvived(profile, 80);
+    const ep24 = calculateEpisodesSurvived(profile, 24);
+    const ep120 = calculateEpisodesSurvived(profile, 120);
+
+    // 权谋型在三个世界观都应接近各自上限
+    expect(ep80).toBeGreaterThan(80 * 0.7);
+    expect(ep24).toBeGreaterThan(24 * 0.7);
+    expect(ep120).toBeGreaterThan(120 * 0.7);
+  });
+});
+
+describe('mapEpisodesToSeason', () => {
+  const seasons: Season[] = [
+    { name: '一季·入宫', startEpisode: 1, endEpisode: 20 },
+    { name: '二季·争宠', startEpisode: 21, endEpisode: 45 },
+    { name: '三季·夺嫡', startEpisode: 46, endEpisode: 70 },
+    { name: '四季·登顶', startEpisode: 71, endEpisode: 80 },
+  ];
+
+  it('应正确映射到对应季', () => {
+    expect(mapEpisodesToSeason(10, seasons).season.name).toBe('一季·入宫');
+    expect(mapEpisodesToSeason(30, seasons).season.name).toBe('二季·争宠');
+    expect(mapEpisodesToSeason(60, seasons).season.name).toBe('三季·夺嫡');
+    expect(mapEpisodesToSeason(75, seasons).season.name).toBe('四季·登顶');
+  });
+
+  it('边界集数应落在正确季内', () => {
+    expect(mapEpisodesToSeason(20, seasons).season.name).toBe('一季·入宫');
+    expect(mapEpisodesToSeason(21, seasons).season.name).toBe('二季·争宠');
+    expect(mapEpisodesToSeason(80, seasons).season.name).toBe('四季·登顶');
+  });
+
+  it('超出范围时回退到最后一季', () => {
+    const result = mapEpisodesToSeason(999, seasons);
+    expect(result.season.name).toBe('四季·登顶');
+    expect(result.index).toBe(3);
+  });
+
+  it('季内进度应在 0-1 之间', () => {
+    const { progress } = mapEpisodesToSeason(30, seasons); // 二季 21-45，第10集/25集
+    expect(progress).toBeGreaterThanOrEqual(0);
+    expect(progress).toBeLessThanOrEqual(1);
   });
 });

@@ -5,6 +5,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    host: '0.0.0.0',   // 监听所有网卡，允许手机等局域网设备访问
+    port: 5173,
+    strictPort: false,
+  },
   plugins: [
     react(),
     VitePWA({

@@ -179,6 +179,23 @@
     background: linear-gradient(135deg, var(--color-primary-light)33, var(--color-card-bg)) !important;
     box-shadow: 0 0 0 3px var(--color-primary-light), 0 4px 12px rgba(0,0,0,0.08);
   }
+  /* 答题反馈状态 */
+  .option-btn-correct {
+    border-color: #2d6a4f !important;
+    background: linear-gradient(135deg, rgba(45,106,79,0.15), var(--color-card-bg)) !important;
+    box-shadow: 0 0 0 3px rgba(45,106,79,0.3), 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .option-btn-incorrect {
+    border-color: #e94560 !important;
+    background: linear-gradient(135deg, rgba(233,69,96,0.12), var(--color-card-bg)) !important;
+  }
+  .option-btn-dimmed {
+    opacity: 0.45;
+    filter: grayscale(0.5);
+  }
+  .option-btn:disabled {
+    cursor: default;
+  }
 }
 
 /* ============================================
@@ -221,6 +238,11 @@
 .animate-float { animation: float 6s ease-in-out infinite; }
 .animate-bounce-in { animation: bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+@keyframes pulse-once {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+.animate-pulse-once { animation: pulse-once 0.6s ease-out 2; }
 
 /* 加载骨架屏 */
 .skeleton {

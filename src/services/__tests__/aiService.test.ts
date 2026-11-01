@@ -10,6 +10,13 @@ const mockWorldview: Worldview = {
   coverEmoji: '🏯',
   accentColor: '#c87a35',
   bgGradient: 'from-amber-50 to-orange-100',
+  episodeMax: 80,
+  seasons: [
+    { name: '一季·入宫', startEpisode: 1, endEpisode: 20 },
+    { name: '二季·争宠', startEpisode: 21, endEpisode: 45 },
+    { name: '三季·夺嫡', startEpisode: 46, endEpisode: 70 },
+    { name: '四季·登顶', startEpisode: 71, endEpisode: 80 },
+  ],
 };
 
 const mockProfile: PersonalityProfile = {

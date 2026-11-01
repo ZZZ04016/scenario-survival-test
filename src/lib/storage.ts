@@ -17,6 +17,103 @@ export interface TestRecord {
 // localStorage 排行榜存储键
 const LOCAL_LEADERBOARD_KEY = 'scenario_survival_leaderboard';
 
+// 集数分布埋点存储键
+const EPISODE_METRICS_KEY = 'scenario_survival_episode_metrics';
+
+// 传奇局归档存储键
+const LEGENDARY_RUNS_KEY = 'scenario_survival_legendary_runs';
+
+/**
+ * 集数分布统计
+ * - histogram：按 10 集分桶的直方图（桶键 = floor(episodes/10)*10）
+ * - byWorldview：分世界观的同样结构
+ * 用于验证集数分布是否均衡、低结局池是否仍为死区
+ */
+export interface EpisodeMetrics {
+  total: number;
+  histogram: Record<number, number>;
+  byWorldview: Record<string, { total: number; histogram: Record<number, number> }>;
+}
+
+/**
+ * 读取本地集数分布统计
+ */
+export function getEpisodeMetrics(): EpisodeMetrics {
+  try {
+    const raw = localStorage.getItem(EPISODE_METRICS_KEY);
+    if (raw) return JSON.parse(raw) as EpisodeMetrics;
+  } catch {
+    // 解析失败时返回空结构
+  }
+  return { total: 0, histogram: {}, byWorldview: {} };
+}
+
+/**
+ * 记录一次集数结果到本地分布统计
+ * 始终写入 localStorage；若 Supabase 已配置则异步同步（失败静默）
+ */
+export function recordEpisodeMetric(worldviewId: string, episodes: number): void {
+  try {
+    const metrics = getEpisodeMetrics();
+    const bucket = Math.floor(episodes / 10) * 10;
+
+    metrics.total += 1;
+    metrics.histogram[bucket] = (metrics.histogram[bucket] ?? 0) + 1;
+
+    if (!metrics.byWorldview[worldviewId]) {
+      metrics.byWorldview[worldviewId] = { total: 0, histogram: {} };
+    }
+    const wv = metrics.byWorldview[worldviewId];
+    wv.total += 1;
+    wv.histogram[bucket] = (wv.histogram[bucket] ?? 0) + 1;
+
+    localStorage.setItem(EPISODE_METRICS_KEY, JSON.stringify(metrics));
+  } catch {
+    // 埋点失败不应影响主流程
+  }
+}
+
+/**
+ * 传奇局记录（集数达到世界观上限 90% 的对局）
+ */
+export interface LegendaryRun {
+  worldviewId: string;
+  worldviewName: string;
+  episodesSurvived: number;
+  episodeMax: number;
+  ending: string;
+  primaryTrait: string;
+  createdAt: string;
+}
+
+/**
+ * 获取所有传奇局归档（按集数降序）
+ */
+export function getLegendaryRuns(): LegendaryRun[] {
+  try {
+    const raw = localStorage.getItem(LEGENDARY_RUNS_KEY);
+    const runs: LegendaryRun[] = raw ? JSON.parse(raw) : [];
+    return runs.sort((a, b) => b.episodesSurvived - a.episodesSurvived);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * 保存一次传奇局（最多保留 20 条，按集数降序）
+ */
+export function saveLegendaryRun(run: LegendaryRun): void {
+  try {
+    const runs = getLegendaryRuns();
+    runs.push(run);
+    runs.sort((a, b) => b.episodesSurvived - a.episodesSurvived);
+    const trimmed = runs.slice(0, 20);
+    localStorage.setItem(LEGENDARY_RUNS_KEY, JSON.stringify(trimmed));
+  } catch {
+    // 归档失败不应影响主流程
+  }
+}
+
 /**
  * 获取本地存储的排行榜数据
  */

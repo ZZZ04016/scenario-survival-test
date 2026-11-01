@@ -5,6 +5,7 @@
   command = "npm run build"
   publish = "dist"
   functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
 
 # SPA 路由回退：所有路径都返回 index.html，避免刷新 404
 [[redirects]]
@@ -19,3 +20,10 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    X-XSS-Protection = "1; mode=block"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Edge Function：安全防护（速率限制 + 爬虫拦截）
+[[edge_functions]]
+  path = "/*"
+  function = "security"

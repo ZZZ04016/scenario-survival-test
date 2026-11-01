@@ -1,7 +1,11 @@
-import type { StoryResult, UserImage, Worldview } from '../types';
-import { buildStoryPrompt, buildImagePrompt } from '../utils/promptBuilder';
-import type { PersonalityProfile } from '../types';
+import type { OriginSetup, StoryResult, UserImage, Worldview } from '../types';
+import { buildStoryPrompt, buildImagePrompt, buildImg2ImgPrompt, buildFinalCharacterPrompt, hashOriginSeed } from '../utils/promptBuilder';
+import type { PersonalityProfile, PersonalityTrait } from '../types';
 import { generateOfflineCharacterImage, isOnline } from './offlineImageService';
+import { generateDynamicCharacterPortrait } from '../data/characterLibrary';
+import { generateDynamicStory, generateConsequence } from '../data/storyLibrary';
+import { calculateEpisodesSurvived } from '../utils/personality';
+import { detectBot, checkLocalRateLimit, hasUserInteracted } from '../utils/security';
 
 export interface GenerateStoryParams {
   worldview: Worldview;
@@ -11,73 +15,26 @@ export interface GenerateStoryParams {
   onProgress?: (partialText: string) => void;
 }
 
+export interface GenerateConsequenceParams {
+  worldview: Worldview;
+  selectedTrait: PersonalityTrait;
+  sceneText: string;
+  actionText: string;
+  storyHistory: string[];   // 已发生的剧情历史，保持连贯
+}
+
+export interface GenerateEndingParams {
+  worldview: Worldview;
+  profile: PersonalityProfile;
+  storyHistory: string[];
+  episodesSurvived?: number; // 方案 C：逐抉择累加的集数（若提供则优先使用，否则按性格公式计算）
+}
+
 /**
  * AI 服务模块
  * 负责调用大模型生成剧情，并解析返回的 JSON
  * 支持真实 API 调用和 Mock 模式（用于本地测试）
  */
-
-// Mock 剧情模板库（用于无 API Key 时的本地演示）
-const MOCK_STORIES: Record<string, StoryResult> = {
-  palace: {
-    role: '你是刚入宫的答应沈氏，父亲是六品小官，无依无靠',
-    story: [
-      '入宫第一天，你就感受到了这座紫禁城的森森寒意。同住的宫女偷走你的玉镯，你没有声张，只是默默观察——你知道，在这深宫里，冲动是活不过第一集的。',
-      '皇后宫中的毒茶事件让你第一次直面后宫的险恶。你选择暗中提醒皇后，既没有得罪下毒的宠妃，也博得了皇后的一丝好感。这一步棋，你走得谨慎而聪明。',
-      '最终决战，你与最大的对手正面交锋。你没有选择硬碰硬，而是布下天罗地网，等她露出破绽。一击必杀，你登上了后宫之巅。',
-    ],
-    ending: '你在后宫活了 68 集，最终成为母仪天下的皇后。你的谨慎与心机，让你成为了这场权力游戏的最后赢家。',
-    episodesSurvived: 68,
-    personalityAnalysis: '你是典型的"谨慎心机型"——不轻易出手，但出手必中。在现实中，你适合需要长期布局的工作，善于等待时机、抓住关键。但要注意，过度谨慎可能让你错过一些需要果断的机会。',
-    shareColor: '#8B4513',
-    characterPortrait: {
-      name: '沈婉宁',
-      appearance: '眉目清秀，气质温婉，一双眼睛藏着洞察人心的锐利',
-      background: '六品文官之女，因家族中落被迫入宫，表面柔弱实则心思缜密',
-      personalityTags: ['谨慎隐忍', '心机深沉', '外柔内刚', '善于布局'],
-    },
-  },
-  apocalypse: {
-    role: '你是一名普通大学生，丧尸爆发时被困在宿舍',
-    story: [
-      '丧尸爆发的第一天，你看着室友变异，果断从窗户跳了下去。膝盖擦破了皮，但你活了下来。你知道，在这个新世界里，犹豫就意味着死亡。',
-      '你找到了一个超市，里面已经有一群幸存者。你没有贸然冲进去，而是在外面观察了整整一天。确认他们不是坏人后，你才敲门请求加入。',
-      '半夜营地被丧尸围攻，你带头冲锋打开缺口，带着大家逃了出来。从这一刻起，你成了队伍的主心骨。',
-      '队伍里有人受伤发烧，可能变异。你没有立刻抛弃他，而是把他绑起来观察。最终他没有变异，成了你最忠诚的伙伴。',
-      '最后关头，食物只够一个人活。你选择和同伴平分，一起走到最后。虽然你们最终没能等到救援，但你们死得有尊严。',
-    ],
-    ending: '你在末世活了 42 集，最终和同伴一起在废墟中迎来了黎明。你的果断与善良，让你成为了末世中少有的温暖。',
-    episodesSurvived: 42,
-    personalityAnalysis: '你是"果断善良型"——有勇气但不冷血，有原则但不迂腐。在现实中，你适合需要领导力和决策力的岗位，你的团队会因为你而有安全感。但有时你的善良可能被人利用，要学会分辨。',
-    shareColor: '#E94560',
-    characterPortrait: {
-      name: '陆远',
-      appearance: '身形矫健，眼神坚毅，脸上有一道浅浅的疤痕，透着不屈的韧劲',
-      background: '普通大学生，末世爆发后凭借果断和善良成为小队核心',
-      personalityTags: ['果断勇敢', '心地善良', '有领导力', '重情重义'],
-    },
-  },
-  cultivation: {
-    role: '你是一个五灵根的废柴修士，被宗门分到杂役峰',
-    story: [
-      '检测灵根那天，你被判定为五灵根——修仙界最废的资质。所有人都嘲笑你，但你没有放弃。你选择剑走偏锋，寻找偏门功法。',
-      '宗门大比，你遇到实力远超你的对手。你用阴招赢了他，虽然不光彩，但你活了下来。在修仙界，结果比过程重要。',
-      '你发现了一个上古秘境。你骗同门去错的地方，自己率先到达，得到了上古传承。从这一刻起，你的命运改变了。',
-      '师父被陷害，你没有冲动地对抗宗门，而是暗中调查真相。三年后，你掌握了证据，为师父翻案，同时肃清了宗门内的叛徒。',
-      '飞升在即，你发现飞升后所有人都会忘记你。你犹豫了，最终放弃了飞升，选择留在人间。对你来说，被人记住比成仙更重要。',
-    ],
-    ending: '你没有飞升，但你成为了人间最强者。你活了 500 岁，被无数人铭记。你的选择证明了，修仙修的不仅是实力，更是心性。',
-    episodesSurvived: 75,
-    personalityAnalysis: '你是"心机重情型"——为达目的可以不择手段，但内心有自己的底线。在现实中，你是天生的战略家，善于布局和隐忍。但要注意，不要为了成功失去了最重要的东西。',
-    shareColor: '#2D6A4F',
-    characterPortrait: {
-      name: '叶尘',
-      appearance: '一袭青衫，眉目如画，气质出尘，眼中带着看透世事的淡然',
-      background: '五灵根废柴出身，凭借坚韧心性和过人谋略逆袭成人间最强',
-      personalityTags: ['坚韧不拔', '深谋远虑', '重情重义', '剑走偏锋'],
-    },
-  },
-};
 
 // 占位符值列表（用于判断是否为真实配置）
 const PLACEHOLDER_VALUES = new Set([
@@ -149,6 +106,33 @@ export class AIService {
   }
 
   /**
+   * 安全检查：在调用真实 AI 前执行
+   * - 检测自动化工具
+   * - 前端限流
+   * - 用户交互验证
+   */
+  private performSecurityCheck(): { passed: boolean; message?: string } {
+    // 1. 检测自动化工具/无头浏览器
+    const botCheck = detectBot();
+    if (botCheck.isBot) {
+      console.warn('[Security] 检测到自动化工具:', botCheck.reason);
+      return { passed: false, message: '检测到异常访问环境，请使用正常浏览器' };
+    }
+
+    // 2. 前端限流
+    if (!checkLocalRateLimit()) {
+      return { passed: false, message: '操作过于频繁，请稍后再试' };
+    }
+
+    // 3. 用户交互验证（确保是真人操作）
+    if (!hasUserInteracted()) {
+      return { passed: false, message: '请先与页面进行交互' };
+    }
+
+    return { passed: true };
+  }
+
+  /**
    * 生成剧情
    * 优先调用真实 AI（通过 Netlify 代理函数避免跨域问题）
    * 失败时自动降级到 Mock 模式，保证用户体验不中断
@@ -162,6 +146,107 @@ export class AIService {
     } catch (error) {
       console.warn('[AIService] 真实 AI 生成失败，降级到 Mock 模式:', error);
       return this.generateMockStory(params);
+    }
+  }
+
+  /**
+   * 生成单个抉择的后果叙事
+   * 沉浸式剧情体验的核心：用户做选择后，AI 演绎"因为这个选择发生了什么"
+   * 不判定对错，只推进故事
+   */
+  async generateConsequence(params: GenerateConsequenceParams): Promise<string> {
+    if (this.useMock) {
+      // 模拟叙事演绎的短暂延迟，增强沉浸感
+      await new Promise((resolve) => setTimeout(resolve, 400 + Math.random() * 400));
+      return generateConsequence({
+        worldviewId: params.worldview.id,
+        selectedTrait: params.selectedTrait,
+        sceneText: params.sceneText,
+        actionText: params.actionText,
+      });
+    }
+    try {
+      return await this.generateRealConsequence(params);
+    } catch (error) {
+      console.warn('[AIService] 后果叙事生成失败，降级到本地模板:', error);
+      return generateConsequence({
+        worldviewId: params.worldview.id,
+        selectedTrait: params.selectedTrait,
+        sceneText: params.sceneText,
+        actionText: params.actionText,
+      });
+    }
+  }
+
+  /**
+   * 生成最终结局（根据整个故事历史）
+   */
+  async generateEnding(params: GenerateEndingParams): Promise<StoryResult> {
+    if (this.useMock) {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const worldviewId = params.worldview.id;
+      const { primaryTrait, secondaryTrait } = params.profile;
+      const characterPortrait = generateDynamicCharacterPortrait(worldviewId, {
+        primaryTrait,
+        secondaryTrait,
+      });
+      // 方案 C：优先使用逐抉择累加的集数，回退到性格公式
+      const episodesSurvived = params.episodesSurvived ?? calculateEpisodesSurvived(params.profile, params.worldview.episodeMax);
+      const { story, ending, personalityAnalysis } = generateDynamicStory({
+        worldviewId,
+        profile: params.profile,
+        episodesSurvived,
+        episodeMax: params.worldview.episodeMax,
+      });
+      const role = this.buildRoleDescription(worldviewId, characterPortrait);
+      const shareColorMap: Record<string, string> = {
+        palace: '#8B4513',
+        apocalypse: '#E94560',
+        cultivation: '#2D6A4F',
+      };
+      return {
+        role,
+        story: [...params.storyHistory.slice(0, 3), ...story].slice(0, 6),
+        ending,
+        episodesSurvived,
+        personalityAnalysis,
+        shareColor: shareColorMap[worldviewId] ?? '#c87a35',
+        characterPortrait,
+      };
+    }
+    try {
+      return await this.generateRealEnding(params);
+    } catch (error) {
+      console.warn('[AIService] 结局生成失败，降级到本地模板:', error);
+      // 降级到 mock
+      const worldviewId = params.worldview.id;
+      const { primaryTrait, secondaryTrait } = params.profile;
+      const characterPortrait = generateDynamicCharacterPortrait(worldviewId, {
+        primaryTrait,
+        secondaryTrait,
+      });
+      const episodesSurvived = params.episodesSurvived ?? calculateEpisodesSurvived(params.profile, params.worldview.episodeMax);
+      const { story, ending, personalityAnalysis } = generateDynamicStory({
+        worldviewId,
+        profile: params.profile,
+        episodesSurvived,
+        episodeMax: params.worldview.episodeMax,
+      });
+      const role = this.buildRoleDescription(worldviewId, characterPortrait);
+      const shareColorMap: Record<string, string> = {
+        palace: '#8B4513',
+        apocalypse: '#E94560',
+        cultivation: '#2D6A4F',
+      };
+      return {
+        role,
+        story: [...params.storyHistory.slice(0, 3), ...story].slice(0, 6),
+        ending,
+        episodesSurvived,
+        personalityAnalysis,
+        shareColor: shareColorMap[worldviewId] ?? '#c87a35',
+        characterPortrait,
+      };
     }
   }
 
@@ -217,28 +302,50 @@ export class AIService {
 
   /**
    * 生成专属角色图片
-   * 在线模式：调用 Pollinations.ai 生成 AI 图片
+   * 在线模式：
+   *   - 有用户参考图：调用 Pollinations 图生图（img2img），保留原图构图/服饰/风格/背景，仅替换人脸
+   *   - 无参考图：调用 Pollinations 文生图（txt2img）
    * 离线模式：使用 Canvas 程序化绘制角色形象（完全离线）
    * 在线失败时自动降级到离线 Canvas 生成
+   *
+   * @param seed 可选确定性种子，传入则保证相同提示词生成高度相似图片
    */
   async generateCharacterImage(params: {
     worldview: Worldview;
     characterPortrait: StoryResult['characterPortrait'];
     userImage?: UserImage | null;
+    seed?: number;
   }): Promise<string> {
     // 离线时直接使用 Canvas 生成
     if (!isOnline()) {
       return generateOfflineCharacterImage(params);
     }
 
+    // 优先使用传入的确定性 seed，否则随机
+    const seed = params.seed ?? Math.floor(Math.random() * 1000000);
+
+    // 有用户参考图：使用图生图（img2img），保留原图一切元素，仅替换人脸
+    if (params.userImage?.base64) {
+      const img2imgResult = await this.generateImg2Img(
+        {
+          worldview: params.worldview,
+          characterPortrait: params.characterPortrait,
+          userImage: params.userImage,
+        },
+        seed,
+      );
+      if (img2imgResult) return img2imgResult;
+      // img2img 失败时降级到文生图
+      console.warn('[AIService] 图生图失败，降级到文生图');
+    }
+
+    // 无参考图或 img2img 失败：使用文生图
     const prompt = buildImagePrompt({
       worldview: params.worldview,
       characterPortrait: params.characterPortrait,
       userImage: params.userImage,
     });
 
-    // 随机种子，确保每次生成略有不同
-    const seed = Math.floor(Math.random() * 1000000);
     const encodedPrompt = encodeURIComponent(prompt);
     const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=768&nologo=true&seed=${seed}`;
 
@@ -246,7 +353,6 @@ export class AIService {
       const response = await fetch(imageUrl);
 
       if (!response.ok) {
-        // 限流或其他错误时降级到离线 Canvas 生成，不阻塞用户
         const retryAfter = response.headers.get('retry-after');
         console.warn(`[AIService] 图片生成失败 (${response.status})${retryAfter ? `, 建议等待 ${retryAfter}s` : ''}，降级到离线 Canvas`);
         return generateOfflineCharacterImage(params);
@@ -255,15 +361,139 @@ export class AIService {
       const blob = await response.blob();
       return URL.createObjectURL(blob);
     } catch (error) {
-      // 网络错误降级到离线
       console.warn('[AIService] 图片生成网络错误，降级到离线 Canvas:', error);
       return generateOfflineCharacterImage(params);
     }
   }
 
   /**
-   * Mock 模式：根据性格画像从模板库返回剧情
-   * 根据 primaryTrait 和 secondaryTrait 动态调整剧情细节
+   * 基于出身设定三维度生成角色形象图片
+   * 核心链路：originSetup + traitHistory → buildFinalCharacterPrompt + hashOriginSeed → Pollinations 文生图
+   *
+   * @param traitHistory 剧情选择轨迹，用于反映角色经历剧情后的气质变化
+   */
+  async generateOriginImage(params: {
+    worldview: Worldview;
+    origin: OriginSetup;
+    traitHistory?: PersonalityTrait[];
+  }): Promise<string> {
+    const { worldview, origin, traitHistory = [] } = params;
+
+    // 离线时使用 Canvas 生成兜底图
+    if (!isOnline()) {
+      const offlinePortrait = {
+        name: origin.background.name,
+        appearance: origin.talents.map((t) => t.name).join('、'),
+        background: origin.background.description,
+        personalityTags: [origin.initialTrait, ...traitHistory].slice(0, 4),
+      };
+      return generateOfflineCharacterImage({ worldview, characterPortrait: offlinePortrait });
+    }
+
+    // 确定性 seed：相同出身+天赋+性格+剧情轨迹 → 相同 seed
+    const seed = hashOriginSeed(origin, traitHistory);
+
+    // 三维度 + 剧情轨迹映射到结构化提示词
+    const prompt = buildFinalCharacterPrompt(worldview, origin, traitHistory);
+
+    const encodedPrompt = encodeURIComponent(prompt);
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=768&nologo=true&seed=${seed}`;
+
+    try {
+      const response = await fetch(imageUrl);
+
+      if (!response.ok) {
+        console.warn(`[AIService] 出身角色图生成失败 (${response.status})，降级到离线 Canvas`);
+        const offlinePortrait = {
+          name: origin.background.name,
+          appearance: origin.talents.map((t) => t.name).join('、'),
+          background: origin.background.description,
+          personalityTags: [origin.initialTrait, ...traitHistory].slice(0, 4),
+        };
+        return generateOfflineCharacterImage({ worldview, characterPortrait: offlinePortrait });
+      }
+
+      const blob = await response.blob();
+      if (blob.size < 1000) {
+        console.warn('[AIService] 出身角色图返回内容过小，降级到离线 Canvas');
+        const offlinePortrait = {
+          name: origin.background.name,
+          appearance: origin.talents.map((t) => t.name).join('、'),
+          background: origin.background.description,
+          personalityTags: [origin.initialTrait, ...traitHistory].slice(0, 4),
+        };
+        return generateOfflineCharacterImage({ worldview, characterPortrait: offlinePortrait });
+      }
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.warn('[AIService] 出身角色图网络错误，降级到离线 Canvas:', error);
+      const offlinePortrait = {
+        name: origin.background.name,
+        appearance: origin.talents.map((t) => t.name).join('、'),
+        background: origin.background.description,
+        personalityTags: [origin.initialTrait, ...traitHistory].slice(0, 4),
+      };
+      return generateOfflineCharacterImage({ worldview, characterPortrait: offlinePortrait });
+    }
+  }
+
+  /**
+   * 图生图（img2img）：将用户参考图作为输入，替换人脸特征
+   * Pollinations 支持通过 image 参数传入参考图 URL（支持 base64 data URL）
+   * 保留原图的构图、服饰、风格、背景，仅替换人脸
+   */
+  private async generateImg2Img(
+    params: {
+      worldview: Worldview;
+      characterPortrait: StoryResult['characterPortrait'];
+      userImage: UserImage;
+    },
+    seed: number,
+  ): Promise<string | null> {
+    const prompt = buildImg2ImgPrompt({
+      worldview: params.worldview,
+      characterPortrait: params.characterPortrait,
+      userImage: params.userImage,
+    });
+
+    const encodedPrompt = encodeURIComponent(prompt);
+    // Pollinations image 参数支持 base64 data URL
+    const refImage = encodeURIComponent(params.userImage.base64);
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?image=${refImage}&width=512&height=768&nologo=true&seed=${seed}&strength=0.55`;
+
+    // 防止 URL 过长（base64 图片可能很大），超过 8000 字符则不尝试 img2img
+    if (imageUrl.length > 8000) {
+      console.warn('[AIService] 参考图过大，跳过图生图，使用文生图');
+      return null;
+    }
+
+    try {
+      const response = await fetch(imageUrl);
+
+      if (!response.ok) {
+        console.warn(`[AIService] 图生图请求失败 (${response.status})`);
+        return null;
+      }
+
+      const blob = await response.blob();
+      // 空响应或过小图片视为失败
+      if (blob.size < 1000) {
+        console.warn('[AIService] 图生图返回内容过小，视为失败');
+        return null;
+      }
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.warn('[AIService] 图生图网络错误:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Mock 模式：使用动态知识库生成剧情
+   * - 角色画像：从角色库动态组合（名字/外貌/背景/标签）
+   * - 剧情：从剧情片段库按性格特质动态串联
+   * - 结局：根据存活集数和性格特质生成
+   * 确保每次生成内容独特，避免同质化
    */
   private async generateMockStory(
     params: GenerateStoryParams,
@@ -271,62 +501,60 @@ export class AIService {
     // 模拟网络延迟
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    const base = MOCK_STORIES[params.worldview.id] ?? MOCK_STORIES.palace;
+    const worldviewId = params.worldview.id;
     const { primaryTrait, secondaryTrait } = params.profile;
 
-    // 根据性格特质动态调整存活集数
-    const traitBonus: Record<string, number> = {
-      cautious: 5,
-      decisive: 8,
-      scheming: 10,
-      kind: -3,
-      ambitious: 6,
-      loyal: 4,
-    };
-    const bonus = (traitBonus[primaryTrait] ?? 0) + (traitBonus[secondaryTrait] ?? 0) * 0.5;
-    const episodes = Math.max(1, Math.round(base.episodesSurvived + bonus));
+    // 1. 动态生成角色画像
+    const characterPortrait = generateDynamicCharacterPortrait(worldviewId, {
+      primaryTrait,
+      secondaryTrait,
+    });
 
-    // 根据性格特质调整结局描述
-    const traitEndings: Record<string, string> = {
-      cautious: '你的谨慎让你在关键时刻保全了自己，但也让你错过了一些本该属于你的机会。',
-      decisive: '你的果断在每一个生死关头都发挥了作用，你从不犹豫，所以你活到了最后。',
-      scheming: '你的心机让你在这场游戏中始终占据上风，每一步都在你的算计之中。',
-      kind: '你的善良在这个残酷的世界里显得格外珍贵，虽然有时会让你陷入险境，但也为你赢得了真正的伙伴。',
-      ambitious: '你的野心推动你不断向上攀爬，你从不满足于现状，最终站上了巅峰。',
-      loyal: '你的重情重义让你身边聚集了一群生死之交，他们是你活到最后的最大助力。',
-    };
+    // 2. 计算存活集数（根据性格特质 + 世界观集数上限）
+    const episodesSurvived = calculateEpisodesSurvived(params.profile, params.worldview.episodeMax);
 
-    const ending = `${base.ending} ${traitEndings[primaryTrait] ?? ''}`;
+    // 3. 动态生成剧情（开场→中段→结局）
+    const { story, ending, personalityAnalysis } = generateDynamicStory({
+      worldviewId,
+      profile: params.profile,
+      episodesSurvived,
+      episodeMax: params.worldview.episodeMax,
+    });
 
-    // 根据性格调整性格分析
-    const traitAnalysis: Record<string, string> = {
-      cautious: '你是典型的"谨慎型"——不轻易出手，但出手必中。适合需要长期布局的工作，但过度谨慎可能错过机会。',
-      decisive: '你是"果断型"——决策迅速，行动力强。适合需要领导力的岗位，但有时需要三思而后行。',
-      scheming: '你是"谋略型"——善于布局和隐忍，天生的战略家。但要注意不要为了成功失去底线。',
-      kind: '你是"善良型"——有同理心，重感情。你的团队会因你而温暖，但要学会保护自己。',
-      ambitious: '你是"野心型"——目标明确，永不满足。你能成就大事，但也要懂得知足。',
-      loyal: '你是"忠义型"——重承诺，讲情义。你身边从不缺真心朋友，但要分清值得的人。',
+    // 4. 角色设定
+    const role = this.buildRoleDescription(worldviewId, characterPortrait);
+
+    // 5. 分享色（根据世界观）
+    const shareColorMap: Record<string, string> = {
+      palace: '#8B4513',
+      apocalypse: '#E94560',
+      cultivation: '#2D6A4F',
     };
 
     return {
-      ...base,
-      episodesSurvived: episodes,
+      role,
+      story,
       ending,
-      personalityAnalysis: traitAnalysis[primaryTrait] ?? base.personalityAnalysis,
-      characterPortrait: {
-        ...base.characterPortrait,
-        personalityTags: [primaryTrait, secondaryTrait].map(
-          (t) => ({
-            cautious: '谨慎隐忍',
-            decisive: '果断强势',
-            scheming: '心机深沉',
-            kind: '善良单纯',
-            ambitious: '野心勃勃',
-            loyal: '重情重义',
-          })[t] ?? t,
-        ),
-      },
+      episodesSurvived,
+      personalityAnalysis,
+      shareColor: shareColorMap[worldviewId] ?? '#c87a35',
+      characterPortrait,
     };
+  }
+
+  /**
+   * 根据世界观和角色画像构建角色设定描述
+   */
+  private buildRoleDescription(
+    worldviewId: string,
+    portrait: { name: string; background: string },
+  ): string {
+    const rolePrefix: Record<string, string> = {
+      palace: '你是刚入宫的妃嫔',
+      apocalypse: '你是一名末世幸存者',
+      cultivation: '你是一个刚踏入修仙路的修士',
+    };
+    return `${rolePrefix[worldviewId] ?? '你是一个平凡的人'}，名叫${portrait.name}。${portrait.background}`;
   }
 
   /**
@@ -336,6 +564,12 @@ export class AIService {
   private async generateRealStory(
     params: GenerateStoryParams,
   ): Promise<StoryResult> {
+    // 安全检查
+    const security = this.performSecurityCheck();
+    if (!security.passed) {
+      throw new Error(security.message || '安全检查未通过');
+    }
+
     const prompt = buildStoryPrompt({
       worldview: params.worldview,
       profile: params.profile,
@@ -410,6 +644,129 @@ export class AIService {
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('AI 生成超时，请重试');
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  /**
+   * 真实 AI：生成抉择后果叙事
+   */
+  private async generateRealConsequence(params: GenerateConsequenceParams): Promise<string> {
+    // 安全检查
+    const security = this.performSecurityCheck();
+    if (!security.passed) {
+      throw new Error(security.message || '安全检查未通过');
+    }
+
+    const historyText = params.storyHistory.slice(-3).join('\n');
+    const prompt = `你是一位沉浸式互动小说的叙事引擎。以下是已发生的剧情：
+
+${historyText}
+
+当前情境：${params.sceneText}
+玩家选择了行动：「${params.actionText}」
+
+请用 80-120 字演绎这个选择带来的故事后果，要体现该行动风格（${params.selectedTrait}）的影响，推动剧情发展，不要评判对错，只叙事。直接输出叙事文本，不要任何前缀或解释。`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const proxyUrl = '/.netlify/functions/ai-proxy';
+      const response = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: prompt }],
+          stream: false,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.message || this.getErrorMessage(response.status, ''));
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content ?? '';
+      if (!content.trim()) throw new Error('AI 返回内容为空');
+      return content.trim();
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('叙事生成超时，请重试');
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  /**
+   * 真实 AI：生成最终结局
+   */
+  private async generateRealEnding(params: GenerateEndingParams): Promise<StoryResult> {
+    // 安全检查
+    const security = this.performSecurityCheck();
+    if (!security.passed) {
+      throw new Error(security.message || '安全检查未通过');
+    }
+
+    const historyText = params.storyHistory.join('\n');
+    const prompt = `你是一位沉浸式互动小说的叙事引擎。以下是玩家经历的完整剧情：
+
+${historyText}
+
+请根据玩家的决策风格，为这个故事生成一个结局。输出 JSON 格式：
+{
+  "role": "角色设定一句话",
+  "story": ["剧情片段1", "剧情片段2"],
+  "ending": "结局描述",
+  "episodesSurvived": 存活集数(数字),
+  "personalityAnalysis": "性格分析",
+  "shareColor": "#颜色",
+  "characterPortrait": {
+    "name": "名字",
+    "appearance": "外貌",
+    "background": "背景",
+    "personalityTags": ["标签1","标签2"]
+  }
+}
+世界观：${params.worldview.name}。直接输出 JSON。`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const proxyUrl = '/.netlify/functions/ai-proxy';
+      const response = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: prompt }],
+          stream: false,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.message || this.getErrorMessage(response.status, ''));
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content ?? '';
+      if (!content.trim()) throw new Error('AI 返回内容为空');
+      const result = this.parseStoryResponse(content);
+      // 将 AI 返回的集数收敛到世界观上限内，避免与分季结构脱节
+      result.episodesSurvived = Math.max(1, Math.min(params.worldview.episodeMax, result.episodesSurvived));
+      return result;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('结局生成超时，请重试');
       }
       throw error;
     } finally {

@@ -9,6 +9,13 @@ export const WORLDVIEWS: Worldview[] = [
     coverEmoji: '🏯',
     accentColor: '#8B4513',
     bgGradient: 'from-amber-50 to-orange-100',
+    episodeMax: 80,
+    seasons: [
+      { name: '一季·入宫', startEpisode: 1, endEpisode: 20 },
+      { name: '二季·争宠', startEpisode: 21, endEpisode: 45 },
+      { name: '三季·夺嫡', startEpisode: 46, endEpisode: 70 },
+      { name: '四季·登顶', startEpisode: 71, endEpisode: 80 },
+    ],
   },
   {
     id: 'apocalypse',
@@ -18,6 +25,12 @@ export const WORLDVIEWS: Worldview[] = [
     coverEmoji: '🧟',
     accentColor: '#E94560',
     bgGradient: 'from-gray-100 to-slate-200',
+    episodeMax: 24,
+    seasons: [
+      { name: '一季·骤变', startEpisode: 1, endEpisode: 8 },
+      { name: '二季·求生', startEpisode: 9, endEpisode: 16 },
+      { name: '三季·归途', startEpisode: 17, endEpisode: 24 },
+    ],
   },
   {
     id: 'cultivation',
@@ -27,6 +40,13 @@ export const WORLDVIEWS: Worldview[] = [
     coverEmoji: '⚔️',
     accentColor: '#2D6A4F',
     bgGradient: 'from-indigo-50 to-purple-100',
+    episodeMax: 120,
+    seasons: [
+      { name: '一季·入世', startEpisode: 1, endEpisode: 30 },
+      { name: '二季·筑基', startEpisode: 31, endEpisode: 60 },
+      { name: '三季·问道', startEpisode: 61, endEpisode: 90 },
+      { name: '四季·飞升', startEpisode: 91, endEpisode: 120 },
+    ],
   },
 ];
 
