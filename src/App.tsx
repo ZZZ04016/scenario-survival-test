@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppStore } from './store/useAppStore';
 import { WorldviewSelector } from './components/WorldviewSelector/WorldviewSelector';
 import { OriginSetup } from './components/OriginSetup/OriginSetup';
@@ -6,6 +6,8 @@ import { StoryView } from './components/StoryView/StoryView';
 import { GeneratingView } from './components/GeneratingView/GeneratingView';
 import { ResultView } from './components/ResultView/ResultView';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
+import { PasswordGate } from './components/PasswordGate/PasswordGate';
+import { hasValidToken } from './utils/auth';
 
 const THEME_CLASS_MAP: Record<string, string> = {
   palace: 'theme-palace',
@@ -16,6 +18,14 @@ const THEME_CLASS_MAP: Record<string, string> = {
 function App() {
   const { stage, worldview, generateEnding } = useAppStore();
   const online = useNetworkStatus();
+  const [unlocked, setUnlocked] = useState(false);
+
+  // 页面加载时检查是否已有有效 token
+  useEffect(() => {
+    if (hasValidToken()) {
+      setUnlocked(true);
+    }
+  }, []);
 
   // 根据世界观切换主题（首页用默认主题）
   useEffect(() => {
@@ -37,6 +47,11 @@ function App() {
       generateEnding();
     }
   }, [stage, generateEnding]);
+
+  // 未解锁时显示密码门
+  if (!unlocked) {
+    return <PasswordGate onUnlocked={() => setUnlocked(true)} />;
+  }
 
   return (
     <div className="min-h-screen">

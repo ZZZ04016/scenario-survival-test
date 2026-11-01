@@ -6,6 +6,7 @@ import { generateDynamicCharacterPortrait } from '../data/characterLibrary';
 import { generateDynamicStory, generateConsequence } from '../data/storyLibrary';
 import { calculateEpisodesSurvived } from '../utils/personality';
 import { detectBot, checkLocalRateLimit, hasUserInteracted } from '../utils/security';
+import { getToken } from '../utils/auth';
 
 export interface GenerateStoryParams {
   worldview: Worldview;
@@ -582,9 +583,13 @@ export class AIService {
 
     try {
       const proxyUrl = '/.netlify/functions/ai-proxy';
+      const token = getToken();
       const response = await fetch(proxyUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           messages: [{ role: 'user', content: prompt }],
           stream: true,
@@ -676,9 +681,13 @@ ${historyText}
 
     try {
       const proxyUrl = '/.netlify/functions/ai-proxy';
+      const token = getToken();
       const response = await fetch(proxyUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           messages: [{ role: 'user', content: prompt }],
           stream: false,
@@ -742,9 +751,13 @@ ${historyText}
 
     try {
       const proxyUrl = '/.netlify/functions/ai-proxy';
+      const token = getToken();
       const response = await fetch(proxyUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           messages: [{ role: 'user', content: prompt }],
           stream: false,

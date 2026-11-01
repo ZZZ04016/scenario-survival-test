@@ -2,11 +2,15 @@
 // 支持 SSE 流式输出，实现"边生成边展示"的实时体验
 // 环境变量在 Netlify 控制台配置：
 //   VITE_AI_API_BASE, VITE_AI_API_KEY, VITE_AI_MODEL
-// 安全防护：IP 限流、请求体大小限制、参数校验
+//   ACCESS_PASSWORDS: 访问密码列表（逗号分隔），不配置则免费开放
+//   TOKEN_SECRET: token 签名密钥
+// 安全防护：IP 限流、请求体大小限制、参数校验、token 验证
 
 const API_BASE = process.env.VITE_AI_API_BASE || '';
 const API_KEY = process.env.VITE_AI_API_KEY || '';
 const MODEL = process.env.VITE_AI_MODEL || '';
+const TOKEN_SECRET = process.env.TOKEN_SECRET || 'scenario-survival-test-secret-key-2024';
+const ACCESS_PASSWORDS = (process.env.ACCESS_PASSWORDS || '').split(',').map(p => p.trim()).filter(Boolean);
 
 // ---- 安全配置 ----
 const RATE_LIMIT_PER_IP_PER_MINUTE = 15; // 每个 IP 每分钟最多 15 次 AI 调用
@@ -15,6 +19,37 @@ const MAX_REQUEST_BODY = 32 * 1024; // 请求体最大 32KB
 const MAX_MESSAGES = 30; // 最多 30 条消息
 const MAX_MAX_TOKENS = 4000; // 最大 token 数
 const MAX_CONTENT_LENGTH = 8000; // 单条消息最大长度
+
+// ---- Token 验证 ----
+async function verifyToken(token) {
+  if (!token) return false;
+  try {
+    const [payloadBase64, signatureBase64] = token.split('.');
+    if (!payloadBase64 || !signatureBase64) return false;
+
+    // 验证签名
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(TOKEN_SECRET);
+    const key = await crypto.subtle.importKey(
+      'raw', keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false, ['sign'],
+    );
+    const data = encoder.encode(atob(payloadBase64));
+    const expectedSig = await crypto.subtle.sign('HMAC', key, data);
+    const expectedSigBase64 = btoa(String.fromCharCode(...new Uint8Array(expectedSig)));
+
+    if (signatureBase64 !== expectedSigBase64) return false;
+
+    // 检查过期
+    const payload = JSON.parse(atob(payloadBase64));
+    if (payload.exp && Date.now() > payload.exp) return false;
+
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // ---- 内存速率限制（函数实例级）----
 const rateLimitMap = new Map();
@@ -55,6 +90,20 @@ export const handler = async (event) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ error: 'Method not allowed' }),
     };
+  }
+
+  // ---- Token 验证（仅在配置了密码时要求）----
+  if (ACCESS_PASSWORDS.length > 0) {
+    const authHeader = event.headers['authorization'] || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    const tokenValid = await verifyToken(token);
+    if (!tokenValid) {
+      return {
+        statusCode: 401,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'UNAUTHORIZED', message: '请先输入访问密码' }),
+      };
+    }
   }
 
   // 检查环境变量是否配置
