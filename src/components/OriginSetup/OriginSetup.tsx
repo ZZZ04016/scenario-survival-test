@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { OriginBackground, PersonalityTrait, TalentCard, Gender } from '../../types';
+import type { OriginBackground, PersonalityTrait, TalentCard } from '../../types';
 import { TRAIT_LABELS } from '../../types';
 import { getOriginData, rollBackground, rollTalents, RARITY_STYLES } from '../../data/origins';
 import { useAppStore } from '../../store/useAppStore';
@@ -16,14 +16,28 @@ const TRAIT_MYSTERY: Record<PersonalityTrait, string> = {
   loyal: '一诺千金，肝胆相照',
 };
 
-// 命运签文（用于预估集数的神秘表述）
+// 命运签文
 const FORTUNE_PHRASES = [
   '天机初现',
   '星象指引',
   '命数已显',
   '卦象所示',
   '运势所归',
+  '玄机暗伏',
+  '命由天定',
+  '气数使然',
 ];
+
+// 根据预估集数生成神秘命运描述（不暴露具体数字）
+function getFortuneDescription(mid: number, max: number): { level: string; hint: string } {
+  const ratio = mid / max;
+  if (ratio <= 0.15) return { level: '大凶之兆', hint: '命途多舛，步步惊心，稍有不慎便万劫不复' };
+  if (ratio <= 0.3) return { level: '凶多吉少', hint: '前路崎岖，危机四伏，需谨小慎微方能苟全' };
+  if (ratio <= 0.5) return { level: '吉凶参半', hint: '运势浮沉不定，祸福相依，全凭一念之间' };
+  if (ratio <= 0.7) return { level: '运势渐通', hint: '紫气初现，虽有波折，终能化险为夷' };
+  if (ratio <= 0.85) return { level: '福泽深厚', hint: '气运亨通，贵人相助，可成就一番事业' };
+  return { level: '天命所归', hint: '命格尊贵，福泽绵长，非常人所能及也' };
+}
 
 /** 随机抽取 3 个不重复天赋 */
 function pickRandomTalents(pool: TalentCard[], count = 3): TalentCard[] {
@@ -34,9 +48,6 @@ function pickRandomTalents(pool: TalentCard[], count = 3): TalentCard[] {
 export function OriginSetup() {
   const { worldview, setOriginSetup } = useAppStore();
   const originData = worldview ? getOriginData(worldview.id) : null;
-
-  // 性别
-  const [gender, setGender] = useState<Gender | null>(null);
 
   // 出身背景
   const [bgMode, setBgMode] = useState<'random' | 'manual'>('random');
@@ -62,22 +73,20 @@ export function OriginSetup() {
     }
   }, [worldview?.id]);
 
-  // 预估初始集数（更慷慨 + 神秘范围）
-  const { estimatedLow, estimatedHigh, fortunePhrase } = useMemo(() => {
-    if (!worldview || !background) return { estimatedLow: 0, estimatedHigh: 0, fortunePhrase: '' };
+  // 命运推演（神秘化，不暴露具体集数）
+  const { fortuneLevel, fortuneHint, fortunePhrase } = useMemo(() => {
+    if (!worldview || !background) return { fortuneLevel: '', fortuneHint: '', fortunePhrase: '' };
     const talentBonus = selectedTalents.reduce((s, t) => s + t.episodeBonus, 0);
-    // 更慷慨的基础值：20% 的最大集数 + 出身加成 + 天赋加成 + 慷慨加成
     const base = Math.max(3, worldview.episodeMax * 0.2) + background.episodeBonus + talentBonus + 2;
     const mid = Math.max(3, Math.min(worldview.episodeMax, Math.round(base)));
-    const low = Math.max(1, mid - 1);
-    const high = Math.min(worldview.episodeMax, mid + 2);
+    const { level, hint } = getFortuneDescription(mid, worldview.episodeMax);
     const phrase = FORTUNE_PHRASES[Math.floor(Math.random() * FORTUNE_PHRASES.length)];
-    return { estimatedLow: low, estimatedHigh: high, fortunePhrase: phrase };
+    return { fortuneLevel: level, fortuneHint: hint, fortunePhrase: phrase };
   }, [worldview, background, selectedTalents]);
 
   if (!worldview || !originData || !background) return null;
 
-  const canStart = gender !== null && selectedTalents.length === 3 && initialTrait !== null;
+  const canStart = selectedTalents.length === 3 && initialTrait !== null;
 
   // ========== 出身背景操作 ==========
   const rerollBackground = () => {
@@ -125,7 +134,6 @@ export function OriginSetup() {
   const handleStart = () => {
     if (!canStart || !background) return;
     setOriginSetup({
-      gender: gender as Gender,
       background,
       talents: selectedTalents,
       initialTrait: initialTrait as PersonalityTrait,
@@ -149,35 +157,6 @@ export function OriginSetup() {
           <p className="text-sm text-text-secondary">
             选择你的起点，未知的命运正在等待
           </p>
-        </div>
-
-        {/* 性别选择 */}
-        <div className="card p-5 mb-5">
-          <h2 className="text-lg font-bold mb-3" style={{ color: worldview.accentColor }}>👤 性别</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => setGender('male')}
-              className={`p-4 rounded-xl border-2 transition-all text-center ${gender === 'male' ? 'scale-[1.02]' : 'hover:scale-[1.01]'}`}
-              style={{
-                borderColor: gender === 'male' ? worldview.accentColor : 'var(--color-card-border)',
-                background: gender === 'male' ? `${worldview.accentColor}12` : 'transparent',
-              }}
-            >
-              <div className="text-3xl mb-1">♂️</div>
-              <div className="font-bold" style={{ color: gender === 'male' ? worldview.accentColor : 'var(--color-text)' }}>男</div>
-            </button>
-            <button
-              onClick={() => setGender('female')}
-              className={`p-4 rounded-xl border-2 transition-all text-center ${gender === 'female' ? 'scale-[1.02]' : 'hover:scale-[1.01]'}`}
-              style={{
-                borderColor: gender === 'female' ? worldview.accentColor : 'var(--color-card-border)',
-                background: gender === 'female' ? `${worldview.accentColor}12` : 'transparent',
-              }}
-            >
-              <div className="text-3xl mb-1">♀️</div>
-              <div className="font-bold" style={{ color: gender === 'female' ? worldview.accentColor : 'var(--color-text)' }}>女</div>
-            </button>
-          </div>
         </div>
 
         {/* 出身背景 */}
@@ -352,23 +331,22 @@ export function OriginSetup() {
           )}
         </div>
 
-        {/* 预估集数 + 开始按钮 */}
+        {/* 命运推演 + 开始按钮 */}
         <div className="sticky bottom-4">
           <div className="card p-4 flex items-center justify-between gap-4">
-            <div>
-              <div className="text-xs text-text-secondary flex items-center gap-1">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs flex items-center gap-1.5 mb-1" style={{ color: worldview.accentColor }}>
                 <span className="animate-pulse">🔮</span>
-                {fortunePhrase}
+                <span className="font-medium">{fortunePhrase} · {fortuneLevel}</span>
               </div>
-              <div className="text-2xl font-bold" style={{ color: worldview.accentColor }}>
-                约 {estimatedLow}~{estimatedHigh}
-                <span className="text-sm font-normal text-text-secondary"> / {worldview.episodeMax} 集</span>
+              <div className="text-sm text-text-secondary leading-snug line-clamp-2">
+                {fortuneHint}
               </div>
             </div>
             <button onClick={handleStart} disabled={!canStart}
-              className={`px-6 py-3 rounded-xl font-bold text-white transition-all ${canStart ? 'hover:scale-105 active:scale-95 shadow-lg' : 'opacity-40 cursor-not-allowed'}`}
+              className={`px-6 py-3 rounded-xl font-bold text-white transition-all shrink-0 ${canStart ? 'hover:scale-105 active:scale-95 shadow-lg' : 'opacity-40 cursor-not-allowed'}`}
               style={{ background: worldview.accentColor }}>
-              {canStart ? '⚔️ 推演命运' : `还差${!gender ? ' 性别' : ''}${selectedTalents.length < 3 ? ` ${3 - selectedTalents.length}天赋` : ''}${!initialTrait ? ' 心性' : ''}`}
+              {canStart ? '⚔️ 推演命运' : `还差${selectedTalents.length < 3 ? ` ${3 - selectedTalents.length}天赋` : ''}${!initialTrait ? ' 心性' : ''}`}
             </button>
           </div>
         </div>

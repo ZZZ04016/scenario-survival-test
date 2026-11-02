@@ -261,7 +261,7 @@ export type Gender = 'male' | 'female';
 
 // 完整出身设定（混合模式：先天随机 + 后天选择）
 export interface OriginSetup {
-  gender: Gender;                       // 玩家选择的性别
+  gender?: Gender;                        // 性别（由 store 注入，组件不直接传）
   background: OriginBackground;          // 随机出身背景
   talents: TalentCard[];                 // 随机抽取的3个天赋
   initialTrait: PersonalityTrait;        // 玩家选择的初始性格倾向
@@ -270,6 +270,7 @@ export interface OriginSetup {
 // 应用阶段
 export type AppStage =
   | 'worldview-select'   // 选择世界观
+  | 'gender-select'      // 选择性别
   | 'origin-setup'       // 出身设定（混合模式：随机出身+天赋 + 选择性格倾向）
   | 'story'              // 沉浸式剧情推演（选择→AI演绎后果→继续）
   | 'generating'         // AI 生成结局中

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAppStore } from './store/useAppStore';
 import { WorldviewSelector } from './components/WorldviewSelector/WorldviewSelector';
+import { GenderSelect } from './components/GenderSelect/GenderSelect';
 import { OriginSetup } from './components/OriginSetup/OriginSetup';
 import { StoryView } from './components/StoryView/StoryView';
 import { GeneratingView } from './components/GeneratingView/GeneratingView';
@@ -50,6 +51,7 @@ function App() {
         </div>
       )}
       {stage === 'worldview-select' && <WorldviewSelector />}
+      {stage === 'gender-select' && <GenderSelect />}
       {stage === 'origin-setup' && <OriginSetup />}
       {stage === 'story' && <StoryView />}
       {stage === 'generating' && <GeneratingView />}

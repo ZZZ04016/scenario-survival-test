@@ -3,6 +3,7 @@ import type {
   AppStage,
   BranchChoice,
   BranchScene,
+  Gender,
   OriginSetup,
   PersonalityProfile,
   QuizOption,
@@ -21,6 +22,7 @@ import { getBranchScenes } from '../data/branchingStory';
 interface AppState {
   stage: AppStage;
   worldview: Worldview | null;
+  gender: Gender | null;          // 玩家选择的性别（独立步骤）
 
   // 出身设定（混合模式：先天随机出身+天赋，后天选择性格倾向）
   originSetup: OriginSetup | null;
@@ -44,6 +46,7 @@ interface AppState {
   // Actions
   setStage: (stage: AppStage) => void;
   selectWorldview: (worldview: Worldview) => void;
+  selectGender: (gender: Gender) => void;
   setOriginSetup: (origin: OriginSetup) => void;
   startStory: () => Promise<void>;
   chooseAction: (choice: BranchChoice) => Promise<void>;
@@ -54,6 +57,7 @@ interface AppState {
 export const useAppStore = create<AppState>((set, get) => ({
   stage: 'worldview-select',
   worldview: null,
+  gender: null,
   originSetup: null,
 
   storySegments: [],
@@ -75,6 +79,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectWorldview: (worldview) => {
     set({
       worldview,
+      gender: null,
       originSetup: null,
       storySegments: [],
       currentScene: null,
@@ -85,8 +90,15 @@ export const useAppStore = create<AppState>((set, get) => ({
       story: null,
       error: null,
       newlyUnlockedWorldviews: [],
-      stage: 'origin-setup',
+      stage: 'gender-select',
     });
+  },
+
+  /**
+   * 选择性别后进入出身设定
+   */
+  selectGender: (gender) => {
+    set({ gender, stage: 'origin-setup' });
   },
 
   /**
@@ -94,15 +106,18 @@ export const useAppStore = create<AppState>((set, get) => ({
    * 天赋与出身的集数加成作为初始基准，后续抉择在此基础上累加
    */
   setOriginSetup: (origin) => {
-    const { worldview } = get();
-    if (!worldview) return;
+    const { worldview, gender } = get();
+    if (!worldview || !gender) return;
+
+    // 将性别注入出身设定
+    const originWithGender: OriginSetup = { ...origin, gender };
 
     // 计算初始集数基准：出身加成 + 天赋加成之和
     const talentBonus = origin.talents.reduce((sum, t) => sum + t.episodeBonus, 0);
     const baseEpisodes = Math.max(1, worldview.episodeMax * 0.1) + origin.background.episodeBonus + talentBonus;
     const initialEpisodes = Math.max(1, Math.min(worldview.episodeMax, Math.round(baseEpisodes)));
 
-    set({ originSetup: origin, episodesSurvived: initialEpisodes });
+    set({ originSetup: originWithGender, episodesSurvived: initialEpisodes });
     void get().startStory();
   },
 
@@ -287,6 +302,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       stage: 'worldview-select',
       worldview: null,
+      gender: null,
       originSetup: null,
       storySegments: [],
       currentScene: null,
