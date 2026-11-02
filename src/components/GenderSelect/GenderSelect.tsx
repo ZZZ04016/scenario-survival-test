@@ -31,7 +31,7 @@ export function GenderSelect() {
           选择你的性别
         </h1>
         <p className="text-sm text-text-secondary mb-10 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-          阴阳有别，命运各异
+          不同身份，不同命运
         </p>
 
         {/* 性别选择卡片 */}
@@ -48,7 +48,7 @@ export function GenderSelect() {
             >
               男
             </div>
-            <div className="text-xs text-text-muted">阳刚之气</div>
+            <div className="text-xs text-text-muted">男性身份</div>
           </button>
 
           <button
@@ -63,13 +63,13 @@ export function GenderSelect() {
             >
               女
             </div>
-            <div className="text-xs text-text-muted">阴柔之美</div>
+            <div className="text-xs text-text-muted">女性身份</div>
           </button>
         </div>
 
         {/* 提示 */}
         <p className="text-xs text-text-muted animate-fade-in" style={{ animationDelay: '0.4s' }}>
-          性别将影响剧情中的角色设定与称呼
+          此选择将影响剧情中的身份设定与称呼
         </p>
       </div>
     </div>
