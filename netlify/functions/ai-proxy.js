@@ -1,4 +1,4 @@
-// Netlify Serverless Function - AI API 代理（ESM 语法）
+// Netlify Serverless Function - AI API 代理（CommonJS 语法）
 // 支持 SSE 流式输出，实现"边生成边展示"的实时体验
 // 环境变量在 Netlify 控制台配置：
 //   VITE_AI_API_BASE, VITE_AI_API_KEY, VITE_AI_MODEL
@@ -80,7 +80,7 @@ function getClientIP(event) {
   );
 }
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   const clientIP = getClientIP(event);
 
   // 仅允许 POST
