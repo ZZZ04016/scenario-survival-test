@@ -584,6 +584,24 @@ export function buildOriginImagePrompt(worldview: Worldview, origin: OriginSetup
 }
 
 /**
+ * 将出身身份描述按性别改写，确保图片生成的角色性别与玩家选择一致
+ * 例如 "daughter of a wealthy merchant family" → 男性时改为 "son of a wealthy merchant family"
+ */
+function applyGenderToIdentity(identity: string, gender: 'male' | 'female'): string {
+  if (gender === 'male') {
+    return identity
+      .replace(/\bdaughter\b/gi, 'son')
+      .replace(/\bmaid\b/gi, 'attendant')
+      .replace(/\bgirl\b/gi, 'young man')
+      .replace(/\bwoman\b/gi, 'man')
+      .replace(/\bfemale\b/gi, 'male')
+      .replace(/\bprincess\b/gi, 'prince')
+      .replace(/\bconcubine\b/gi, 'courtier');
+  }
+  return identity;
+}
+
+/**
  * 基于出身三维度 + 剧情选择轨迹构建最终角色形象提示词
  * 在出身设定的基础上，叠加整个剧情过程中的抉择轨迹，让角色形象反映玩家的完整人生
  *
@@ -600,6 +618,13 @@ export function buildFinalCharacterPrompt(
     costume: imgCfg.costume,
     status: 'distinctive bearing',
   };
+
+  // 性别：确保图片生成的角色性别与玩家选择一致，默认女性
+  const gender = origin.gender ?? 'female';
+  const genderDescriptor = gender === 'male'
+    ? 'a handsome young man, masculine features, male'
+    : 'a beautiful young woman, feminine features, female';
+  const genderedIdentity = applyGenderToIdentity(bg.identity, gender);
 
   // 天赋特征
   const talentFeatures = origin.talents
@@ -629,7 +654,7 @@ export function buildFinalCharacterPrompt(
     : 'fresh and untested look';
 
   const prompt = [
-    `cinematic portrait of ${bg.identity}, a character in the ${worldview.name} world.`,
+    `cinematic portrait of ${genderDescriptor}, ${genderedIdentity}, a character in the ${worldview.name} world.`,
     `Costume: ${bg.costume}. Social bearing: ${bg.status}.`,
     talentFeatures ? `Distinctive features from talents: ${talentFeatures}.` : '',
     `Facial expression, pose and temperament: ${finalPose}.`,
@@ -638,7 +663,7 @@ export function buildFinalCharacterPrompt(
     `Lighting and atmosphere: ${imgCfg.atmosphere}.`,
     `Art style: ${imgCfg.style}.`,
     `high detail, 8k resolution, professional character concept art, sharp focus, natural skin texture, lifelike eyes, detailed fabric textures.`,
-    `Negative: low quality, blurry, distorted, deformed, extra fingers, watermark, text, ugly, duplicate, mutation, bad anatomy, bad proportions.`,
+    `Negative: low quality, blurry, distorted, deformed, extra fingers, watermark, text, ugly, duplicate, mutation, bad anatomy, bad proportions, wrong gender.`,
   ].filter(Boolean).join(' ');
 
   return prompt;

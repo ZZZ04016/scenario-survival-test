@@ -192,7 +192,7 @@ export class AIService {
       const characterPortrait = generateDynamicCharacterPortrait(worldviewId, {
         primaryTrait,
         secondaryTrait,
-      });
+      }, params.originSetup?.gender);
       // 方案 C：优先使用逐抉择累加的集数，回退到性格公式
       const episodesSurvived = params.episodesSurvived ?? calculateEpisodesSurvived(params.profile, params.worldview.episodeMax);
       const { story, ending, personalityAnalysis } = generateDynamicStory({
@@ -201,7 +201,7 @@ export class AIService {
         episodesSurvived,
         episodeMax: params.worldview.episodeMax,
       });
-      const role = this.buildRoleDescription(worldviewId, characterPortrait);
+      const role = this.buildRoleDescription(worldviewId, characterPortrait, params.originSetup?.gender);
       const shareColorMap: Record<string, string> = {
         palace: '#8B4513',
         apocalypse: '#E94560',
@@ -227,7 +227,7 @@ export class AIService {
       const characterPortrait = generateDynamicCharacterPortrait(worldviewId, {
         primaryTrait,
         secondaryTrait,
-      });
+      }, params.originSetup?.gender);
       const episodesSurvived = params.episodesSurvived ?? calculateEpisodesSurvived(params.profile, params.worldview.episodeMax);
       const { story, ending, personalityAnalysis } = generateDynamicStory({
         worldviewId,
@@ -235,7 +235,7 @@ export class AIService {
         episodesSurvived,
         episodeMax: params.worldview.episodeMax,
       });
-      const role = this.buildRoleDescription(worldviewId, characterPortrait);
+      const role = this.buildRoleDescription(worldviewId, characterPortrait, params.originSetup?.gender);
       const shareColorMap: Record<string, string> = {
         palace: '#8B4513',
         apocalypse: '#E94560',
@@ -350,7 +350,7 @@ export class AIService {
     });
 
     const encodedPrompt = encodeURIComponent(prompt);
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=768&nologo=true&seed=${seed}`;
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=768&model=flux&nologo=true&seed=${seed}`;
 
     try {
       const response = await fetch(imageUrl);
@@ -400,7 +400,7 @@ export class AIService {
     const prompt = buildFinalCharacterPrompt(worldview, origin, traitHistory);
 
     const encodedPrompt = encodeURIComponent(prompt);
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=768&nologo=true&seed=${seed}`;
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=768&model=flux&nologo=true&seed=${seed}`;
 
     try {
       const response = await fetch(imageUrl);
@@ -462,7 +462,7 @@ export class AIService {
     const encodedPrompt = encodeURIComponent(prompt);
     // Pollinations image 参数支持 base64 data URL
     const refImage = encodeURIComponent(params.userImage.base64);
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?image=${refImage}&width=512&height=768&nologo=true&seed=${seed}&strength=0.55`;
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?image=${refImage}&width=512&height=768&model=flux&nologo=true&seed=${seed}&strength=0.55`;
 
     // 防止 URL 过长（base64 图片可能很大），超过 8000 字符则不尝试 img2img
     if (imageUrl.length > 8000) {
@@ -511,7 +511,7 @@ export class AIService {
     const characterPortrait = generateDynamicCharacterPortrait(worldviewId, {
       primaryTrait,
       secondaryTrait,
-    });
+    }, params.originSetup?.gender);
 
     // 2. 计算存活集数（根据性格特质 + 世界观集数上限）
     const episodesSurvived = calculateEpisodesSurvived(params.profile, params.worldview.episodeMax);
@@ -525,7 +525,7 @@ export class AIService {
     });
 
     // 4. 角色设定
-    const role = this.buildRoleDescription(worldviewId, characterPortrait);
+    const role = this.buildRoleDescription(worldviewId, characterPortrait, params.originSetup?.gender);
 
     // 5. 分享色（根据世界观）
     const shareColorMap: Record<string, string> = {
@@ -546,14 +546,16 @@ export class AIService {
   }
 
   /**
-   * 根据世界观和角色画像构建角色设定描述
+   * 根据世界观、角色画像和性别构建角色设定描述
    */
   private buildRoleDescription(
     worldviewId: string,
     portrait: { name: string; background: string },
+    gender?: 'male' | 'female',
   ): string {
+    const isMale = gender === 'male';
     const rolePrefix: Record<string, string> = {
-      palace: '你是刚入宫的妃嫔',
+      palace: isMale ? '你是刚入宫的男子（侍卫/内侍/侍从等身份）' : '你是刚入宫的妃嫔',
       apocalypse: '你是一名末世幸存者',
       cultivation: '你是一个刚踏入修仙路的修士',
     };
@@ -729,11 +731,20 @@ ${historyText}
 
     const historyText = params.storyHistory.join('\n');
     const genderText = params.originSetup?.gender === 'male' ? '男性' : '女性';
+    const genderNameHint = params.originSetup?.gender === 'male'
+      ? '角色名必须是男性名字（如：景行、之珩、怀瑾等），称呼用"他/公子/大人"'
+      : '角色名必须是女性名字（如：婉宁、清漪、若雪等），称呼用"她/姑娘/娘娘"';
     const prompt = `你是一位沉浸式互动小说的叙事引擎。以下是玩家（${genderText}）经历的完整剧情：
 
 ${historyText}
 
-请根据玩家的决策风格，为这个故事生成一个结局。角色性别为${genderText}，外貌和称呼要符合性别。输出 JSON 格式：
+请根据玩家的决策风格，为这个故事生成一个结局。
+【重要性别约束】角色性别为${genderText}，必须严格遵守：
+- ${genderNameHint}
+- 外貌描述要符合${genderText}特征
+- 背景描述中的身份称谓要符合${genderText}（如男性不用"妃嫔/宫女/之女"等女性称谓）
+
+输出 JSON 格式：
 {
   "role": "角色设定一句话",
   "story": ["剧情片段1", "剧情片段2"],

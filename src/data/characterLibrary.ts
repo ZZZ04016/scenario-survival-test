@@ -1,4 +1,4 @@
-import type { PersonalityTrait } from '../types';
+import type { Gender, PersonalityTrait } from '../types';
 import { TRAIT_LABELS } from '../types';
 
 /**
@@ -8,7 +8,8 @@ import { TRAIT_LABELS } from '../types';
 
 interface NamePool {
   surname: string[];
-  given: string[];
+  given: string[];        // 女性用名
+  givenMale?: string[];   // 男性用名（可选，缺省时与 given 共用）
 }
 
 interface AppearancePool {
@@ -38,6 +39,7 @@ const PALACE_LIBRARY: CharacterLibrary = {
   names: {
     surname: ['沈', '苏', '顾', '林', '萧', '叶', '楚', '宋', '温', '柳', '慕容', '上官', '纳兰'],
     given: ['婉宁', '清漪', '锦书', '若雪', '云裳', '未央', '惊鸿', '明月', '韶华', '凝香', '书瑶', '语嫣', '静姝'],
+    givenMale: ['景行', '之珩', '子衿', '怀瑾', '景渊', '承煜', '修远', '砚之', '云舟', '慕白', '君策', '慎之', '思明'],
   },
   appearances: {
     face: ['鹅蛋脸，线条柔和', '瓜子脸，下颌精致', '圆脸，娇憨可爱', '方脸，端庄大气', '心形脸，明艳动人'],
@@ -144,11 +146,12 @@ function pickMany<T>(arr: T[], n: number): T[] {
 
 /**
  * 生成动态角色画像
- * 根据世界观和性格特质，从知识库中动态组合，确保每个角色独特
+ * 根据世界观、性格特质和性别，从知识库中动态组合，确保每个角色独特
  */
 export function generateDynamicCharacterPortrait(
   worldviewId: string,
   profile: { primaryTrait: PersonalityTrait; secondaryTrait: PersonalityTrait },
+  gender?: Gender,
 ): {
   name: string;
   appearance: string;
@@ -157,8 +160,11 @@ export function generateDynamicCharacterPortrait(
 } {
   const lib = CHARACTER_LIBRARIES[worldviewId] ?? CULTIVATION_LIBRARY;
 
-  // 名字：姓 + 名 随机组合
-  const name = `${pick(lib.names.surname)}${pick(lib.names.given)}`;
+  // 名字：姓 + 名 随机组合，根据性别选择对应的名字池
+  const givenPool = gender === 'male' && lib.names.givenMale
+    ? lib.names.givenMale
+    : lib.names.given;
+  const name = `${pick(lib.names.surname)}${pick(givenPool)}`;
 
   // 外貌：各维度随机组合
   const appearance =
