@@ -5,7 +5,10 @@ export type PersonalityTrait =
   | 'scheming'      // 心机深沉
   | 'kind'          // 善良单纯
   | 'ambitious'     // 野心勃勃
-  | 'loyal';        // 重情重义
+  | 'loyal'         // 重情重义
+  | 'resolute'      // 坚韧不拔
+  | 'wise'          // 睿智深沉
+  | 'bold';         // 豪迈不羁
 
 // 性格特质映射（中文）
 export const TRAIT_LABELS: Record<PersonalityTrait, string> = {
@@ -15,6 +18,9 @@ export const TRAIT_LABELS: Record<PersonalityTrait, string> = {
   kind: '善良单纯',
   ambitious: '野心勃勃',
   loyal: '重情重义',
+  resolute: '坚韧不拔',
+  wise: '睿智深沉',
+  bold: '豪迈不羁',
 };
 
 // 世界观类型

@@ -860,6 +860,9 @@ function pickByTraitBalance(
     kind: 0,
     ambitious: 0,
     loyal: 0,
+    resolute: 0,
+    wise: 0,
+    bold: 0,
   };
   for (const opt of selectedOptions) {
     traitScores[opt.trait] += 1;

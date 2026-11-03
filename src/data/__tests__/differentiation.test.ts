@@ -31,7 +31,7 @@ describe('内容差异化验证', () => {
         profile: {
           primaryTrait: 'decisive',
           secondaryTrait: 'kind',
-          traitScores: { cautious: 1, decisive: 4, scheming: 1, kind: 2, ambitious: 1, loyal: 1 },
+          traitScores: { cautious: 1, decisive: 4, scheming: 1, kind: 2, ambitious: 1, loyal: 1, resolute: 0, wise: 0, bold: 0 },
         },
         episodesSurvived: 50,
       });
@@ -44,13 +44,13 @@ describe('内容差异化验证', () => {
   it('不同存活集数应生成不同结局类型', () => {
     const sLow = generateDynamicStory({
       worldviewId: 'cultivation',
-      profile: { primaryTrait: 'cautious', secondaryTrait: 'kind', traitScores: { cautious: 5, decisive: 0, scheming: 0, kind: 3, ambitious: 0, loyal: 2 } },
+      profile: { primaryTrait: 'cautious', secondaryTrait: 'kind', traitScores: { cautious: 5, decisive: 0, scheming: 0, kind: 3, ambitious: 0, loyal: 2, resolute: 0, wise: 0, bold: 0 } },
       episodesSurvived: 10,
       episodeMax: 120,
     });
     const sHigh = generateDynamicStory({
       worldviewId: 'cultivation',
-      profile: { primaryTrait: 'scheming', secondaryTrait: 'ambitious', traitScores: { cautious: 2, decisive: 1, scheming: 4, kind: 0, ambitious: 3, loyal: 0 } },
+      profile: { primaryTrait: 'scheming', secondaryTrait: 'ambitious', traitScores: { cautious: 2, decisive: 1, scheming: 4, kind: 0, ambitious: 3, loyal: 0, resolute: 0, wise: 0, bold: 0 } },
       episodesSurvived: 95,
       episodeMax: 120,
     });

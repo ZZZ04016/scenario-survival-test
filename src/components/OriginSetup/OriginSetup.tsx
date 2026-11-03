@@ -4,7 +4,7 @@ import { TRAIT_LABELS } from '../../types';
 import { getOriginData, rollBackground, rollTalents, RARITY_STYLES } from '../../data/origins';
 import { useAppStore } from '../../store/useAppStore';
 
-const ALL_TRAITS: PersonalityTrait[] = ['cautious', 'decisive', 'scheming', 'kind', 'ambitious', 'loyal'];
+const ALL_TRAITS: PersonalityTrait[] = ['cautious', 'decisive', 'scheming', 'kind', 'ambitious', 'loyal', 'resolute', 'wise', 'bold'];
 
 // 性格倾向的神秘注解（增加神秘感，不直接说明效果）
 const TRAIT_MYSTERY: Record<PersonalityTrait, string> = {
@@ -14,6 +14,9 @@ const TRAIT_MYSTERY: Record<PersonalityTrait, string> = {
   kind: '心怀慈悲，以柔克刚',
   ambitious: '鸿鹄之志，志在问鼎',
   loyal: '一诺千金，肝胆相照',
+  resolute: '百折不挠，矢志不渝',
+  wise: '洞察秋毫，深谋远虑',
+  bold: '义薄云天，快意恩仇',
 };
 
 // 命运签文

@@ -14,6 +14,9 @@ export function calculatePersonalityProfile(
     kind: 0,
     ambitious: 0,
     loyal: 0,
+    resolute: 0,
+    wise: 0,
+    bold: 0,
   };
 
   for (const option of selectedOptions) {
@@ -38,8 +41,11 @@ export function calculatePersonalityProfile(
 const TRAIT_WEIGHTS: Record<PersonalityTrait, number> = {
   cautious: 2,
   scheming: 2,
+  wise: 2,
   decisive: 1,
   ambitious: 1,
+  resolute: 1.5,
+  bold: 0.5,
   kind: -1.5,
   loyal: -1,
 };

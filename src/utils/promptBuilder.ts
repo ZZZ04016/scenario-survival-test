@@ -251,7 +251,7 @@ const MOOD_MAP: Record<string, string> = {
     '善良单纯': 'gentle and kind expression, warm eyes',
     '野心勃勃': 'ambitious and intense gaze, fierce eyes',
     '重情重义': 'loyal and warm expression, sincere eyes',
-    '坚韧不拔': 'resolute and unyielding expression, firm eyes',
+    '坚韧不拔': 'resolute and unyielding expression, firm unwavering eyes, set jaw',
     '深谋远虑': 'thoughtful and strategic gaze, wise eyes',
     '外柔内刚': 'soft exterior with inner strength, gentle but firm',
     '善于布局': 'scheming and intelligent look, cunning eyes',
@@ -302,6 +302,8 @@ const MOOD_MAP: Record<string, string> = {
     '肝胆相照': 'honest and loyal expression, sincere eyes',
     '同生共死': 'devoted and fatal expression, committed eyes',
     '一诺千金': 'trustworthy and honorable expression, reliable eyes',
+    '睿智深沉': 'thoughtful and sagacious expression, deep insightful eyes, contemplative bearing',
+    '豪迈不羁': 'bold and unrestrained expression, fearless eyes, free-spirited confident stance',
 };
 
 /**
@@ -521,11 +523,12 @@ const ORIGIN_BG_IMAGE_MAP: Record<string, { identity: string; costume: string; s
 /** 天赋词条 → 外貌/气质特征映射 */
 const TALENT_FEATURE_MAP: Record<string, string> = {
   // 容貌类
-  '绝色容颜': 'strikingly beautiful face, perfect features, captivating beauty',
+  '仪表堂堂': 'handsome dignified face, strong features, imposing presence',
   '容貌平平': 'plain ordinary face, unremarkable looks, average appearance',
   // 体质类
   '体弱多病': 'pale sickly complexion, frail thin build, delicate constitution',
   '力大无穷': 'strong muscular build, powerful physique, robust constitution',
+  '天生神力': 'powerfully muscular build, superhuman strength, imposing physique',
   '深度近视': 'wearing round glasses, squinting slightly, bookish look',
   '旧伤缠身': 'visible old scars, slightly stiff movement, weathered look',
   '体质孱弱': 'thin fragile body, weak constitution, easily tired look',
@@ -533,9 +536,9 @@ const TALENT_FEATURE_MAP: Record<string, string> = {
   '心思缜密': 'intelligent thoughtful eyes, analytical and observant expression',
   '玲珑七窍': 'clever perceptive gaze, quick-witted and sharp expression',
   '福星高照': 'warm lucky aura, bright optimistic expression, gentle glow',
-  '琴棋书画': 'refined cultured bearing, elegant artistic temperament, graceful hands',
+  '六艺精通': 'refined cultured bearing, versatile artistic temperament, graceful hands',
   '武学天赋': 'athletic agile build, sharp reflexive eyes, martial bearing',
-  '家世显赫': 'confident privileged bearing, well-groomed, aristocratic features',
+  '父族显赫': 'confident privileged bearing, well-groomed, aristocratic features',
   '听觉敏锐': 'alert attentive expression, slightly tilted head, keen senses',
   '野外生存': 'weathered rugged features, calloused hands, survivor look',
   '急救精通': 'calm focused expression, steady hands, medical confidence',
@@ -546,6 +549,12 @@ const TALENT_FEATURE_MAP: Record<string, string> = {
   '方向感差': 'slightly confused expression, uncertain look',
   '胆小如鼠': 'timid nervous expression, flinching posture',
   '社交恐惧': 'withdrawn anxious expression, avoiding eye contact',
+  '辩才无碍': 'articulate confident expression, persuasive eyes, silver tongue',
+  '刀笔精通': 'scholarly sharp expression, calligraphic bearing, keen insight',
+  '城府深沉': 'inscrutable expression, hidden emotions, calculating depth',
+  '近战搏杀': 'combat-ready physique, battle scars, aggressive fighter bearing',
+  '胆识过人': 'fearless bold expression, unflinching courage in eyes',
+  '人脉广阔': 'sociable confident expression, well-connected bearing, shrewd eyes',
   // 修仙专属
   '天灵根': 'radiant spiritual aura, glowing eyes, celestial temperament',
   '双灵根': 'bright spiritual energy, clear eyes, talented cultivator look',
@@ -562,6 +571,10 @@ const TALENT_FEATURE_MAP: Record<string, string> = {
   '口无遮拦': 'blunt outspoken expression, slightly rebellious look',
   '优柔寡断': 'hesitant uncertain expression, indecisive eyes',
   '名声不佳': 'wary guarded expression, people avoid, lone wolf look',
+  '体弱心善': 'gentle compassionate eyes, kind but frail appearance',
+  '阵道天赋': 'focused analytical expression, geometric insight in eyes, formation master bearing',
+  '统御之才': 'commanding presence, natural leader aura, inspiring confidence',
+  '过目不忘': 'photographic memory, sharp intelligent eyes, quick recall',
 };
 
 /** 性格倾向 → 表情/姿态映射（确定性，不随机） */
@@ -572,6 +585,9 @@ const TRAIT_POSE_MAP: Record<string, string> = {
   kind: 'gentle and kind expression, warm compassionate eyes, soft open posture',
   ambitious: 'ambitious and intense gaze, fierce determined eyes, chin slightly raised',
   loyal: 'loyal and warm expression, sincere steadfast eyes, dependable upright stance',
+  resolute: 'unyielding and resolute expression, firm unwavering eyes, set jaw, determined posture',
+  wise: 'thoughtful and sagacious expression, deep insightful eyes, calm contemplative bearing',
+  bold: 'bold and unrestrained expression, fearless eyes, confident free-spirited stance',
 };
 
 /**

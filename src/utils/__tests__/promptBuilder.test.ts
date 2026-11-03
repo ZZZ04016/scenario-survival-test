@@ -29,6 +29,9 @@ const mockProfile: PersonalityProfile = {
     kind: 0,
     ambitious: 0,
     loyal: 0,
+    resolute: 0,
+    wise: 0,
+    bold: 0,
   },
 };
 

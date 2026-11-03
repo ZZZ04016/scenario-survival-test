@@ -1938,6 +1938,9 @@ const TRAIT_CHOICE_PREFERENCE: Record<PersonalityTrait, PersonalityTrait[]> = {
   kind: ['kind', 'loyal', 'decisive', 'cautious'],
   ambitious: ['ambitious', 'decisive', 'scheming', 'cautious'],
   loyal: ['loyal', 'kind', 'decisive', 'cautious'],
+  resolute: ['loyal', 'decisive', 'cautious', 'ambitious'],
+  wise: ['scheming', 'cautious', 'decisive', 'ambitious'],
+  bold: ['decisive', 'ambitious', 'loyal', 'kind'],
 };
 
 /**

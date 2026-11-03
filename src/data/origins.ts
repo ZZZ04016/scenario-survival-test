@@ -45,7 +45,7 @@ const PALACE_BACKGROUNDS: OriginBackground[] = [
   {
     id: 'palace-dancer',
     name: '教坊司伶人',
-    description: '你因才情出众被选入教坊司，一舞倾城。容貌是你的武器，也是招来祸患的根源。',
+    description: '你因才情出众被选入教坊司，一曲动京华。才情是你的武器，也是招来祸患的根源。',
     episodeBonus: 1,
   },
   {
@@ -104,8 +104,8 @@ const PALACE_BACKGROUNDS: OriginBackground[] = [
   },
   {
     id: 'palace-seamstress',
-    name: '尚衣局绣工',
-    description: '你在尚衣局当差，一针一线都关乎贵人的颜面。你能从衣裳的细节里看出宫里的风向变化。',
+    name: '尚衣局裁作',
+    description: '你在尚衣局当差，精于裁制冠服，一针一线都关乎贵人的颜面。你能从衣裳的细节里看出宫里的风向变化。',
     episodeBonus: 0,
   },
   {
@@ -126,18 +126,45 @@ const PALACE_BACKGROUNDS: OriginBackground[] = [
     description: '你父亲是太医院院判，你自幼随父习医。你的医术在宫里是救命的本事，但也可能成为害人的工具。',
     episodeBonus: 3,
   },
+  {
+    id: 'palace-scholar',
+    name: '新科进士',
+    description: '你十年寒窗终于金榜题名，被选入翰林院。才华是你在宫中立足的根本，但文人相轻，你也成了别人的眼中钉。',
+    episodeBonus: 2,
+  },
+  {
+    id: 'palace-military',
+    name: '羽林卫校尉',
+    description: '你出身武勋世家，年纪轻轻就做到了羽林卫校尉。你负责宫中宿卫，手中握有兵权，也成了各方拉拢的对象。',
+    episodeBonus: 3,
+  },
+  {
+    id: 'palace-eunuch',
+    name: '净身内侍',
+    description: '你自幼净身入宫，从最低等的洒扫太监做起。你失去了男儿的根本，却也因此比任何人都更懂得宫里的规矩。',
+    episodeBonus: -2,
+  },
+  {
+    id: 'palace-clansman',
+    name: '宗室子弟',
+    description: '你是皇室旁支的宗室子弟，身份尊贵却也尴尬。你有皇室血脉，却也因此被皇帝暗中忌惮。',
+    episodeBonus: 1,
+  },
 ];
 
 const PALACE_TALENTS: TalentCard[] = [
   // 正面天赋
   { id: 'p-t1', name: '过目不忘', description: '读过的医书典籍倒背如流', rarity: 'epic', episodeBonus: 3 },
   { id: 'p-t2', name: '心思缜密', description: '总能察觉别人忽略的细节', rarity: 'rare', episodeBonus: 2 },
-  { id: 'p-t3', name: '绝色容颜', description: '容貌倾城，一颦一笑皆动人', rarity: 'legendary', episodeBonus: 4 },
+  { id: 'p-t3', name: '仪表堂堂', description: '相貌英挺，气度不凡', rarity: 'legendary', episodeBonus: 4 },
   { id: 'p-t4', name: '玲珑七窍', description: '善于察言观色，洞悉人心', rarity: 'epic', episodeBonus: 3 },
   { id: 'p-t5', name: '福星高照', description: '运气总是比别人好一点点', rarity: 'rare', episodeBonus: 2 },
-  { id: 'p-t6', name: '琴棋书画', description: '精通雅艺，深得文人雅士欣赏', rarity: 'common', episodeBonus: 1 },
+  { id: 'p-t6', name: '六艺精通', description: '礼乐射御书数皆有造诣', rarity: 'common', episodeBonus: 1 },
   { id: 'p-t7', name: '武学天赋', description: '身轻体健，有习武的底子', rarity: 'rare', episodeBonus: 2 },
-  { id: 'p-t8', name: '家世显赫', description: '母族在朝中有人照应', rarity: 'epic', episodeBonus: 3 },
+  { id: 'p-t8', name: '父族显赫', description: '父族在朝中根基深厚', rarity: 'epic', episodeBonus: 3 },
+  { id: 'p-t15', name: '辩才无碍', description: '能言善辩，巧舌如簧', rarity: 'epic', episodeBonus: 3 },
+  { id: 'p-t16', name: '刀笔精通', description: '擅长书写奏章，文笔犀利', rarity: 'rare', episodeBonus: 2 },
+  { id: 'p-t17', name: '城府深沉', description: '喜怒不形于色，心思难测', rarity: 'legendary', episodeBonus: 4 },
   // 负面天赋
   { id: 'p-t9', name: '体弱多病', description: '先天不足，时常需要调养', rarity: 'common', episodeBonus: -3 },
   { id: 'p-t10', name: '容貌平平', description: '相貌普通，难以引人注目', rarity: 'common', episodeBonus: -1 },
@@ -264,6 +291,24 @@ const APOCALYPSE_BACKGROUNDS: OriginBackground[] = [
     description: '你身体柔韧、平衡感极佳，还懂冥想减压。在高压的末世里，保持冷静和灵活就是你最大的优势。',
     episodeBonus: 0,
   },
+  {
+    id: 'apo-boxer',
+    name: '职业拳击手',
+    description: '你曾是职业拳王，拳头上的功夫是你最硬的底气。近战搏杀无人能敌，但你也知道，双拳难敌四手。',
+    episodeBonus: 3,
+  },
+  {
+    id: 'apo-special-forces',
+    name: '特种兵',
+    description: '你是退役特种兵，精通格斗、射击、爆破、野外生存。你的一身本事在末世就是最强的护身符。',
+    episodeBonus: 5,
+  },
+  {
+    id: 'apo-smuggler',
+    name: '地下走私贩',
+    description: '你常年游走在灰色地带，道上的门路比谁都熟。末世里物资流通全靠你这样的人，你也因此成了各方争抢的对象。',
+    episodeBonus: 1,
+  },
 ];
 
 const APOCALYPSE_TALENTS: TalentCard[] = [
@@ -276,6 +321,9 @@ const APOCALYPSE_TALENTS: TalentCard[] = [
   { id: 'a-t6', name: '物资囤积', description: '末日来临前就准备了充足补给', rarity: 'rare', episodeBonus: 3 },
   { id: 'a-t7', name: '机械精通', description: '会修车、修发电机、改武器', rarity: 'epic', episodeBonus: 3 },
   { id: 'a-t8', name: '领袖气质', description: '天生能让别人信服和追随', rarity: 'legendary', episodeBonus: 4 },
+  { id: 'a-t15', name: '近战搏杀', description: '近身格斗能力顶尖', rarity: 'epic', episodeBonus: 3 },
+  { id: 'a-t16', name: '胆识过人', description: '临危不乱，越是危险越冷静', rarity: 'rare', episodeBonus: 2 },
+  { id: 'a-t17', name: '人脉广阔', description: '道上黑白两道都有人脉', rarity: 'rare', episodeBonus: 3 },
   // 负面天赋
   { id: 'a-t9', name: '体弱多病', description: '需要定期服药，药在末世是奢侈品', rarity: 'rare', episodeBonus: -3 },
   { id: 'a-t10', name: '深度近视', description: '没了眼镜几乎寸步难行', rarity: 'common', episodeBonus: -2 },
@@ -332,8 +380,8 @@ const CULTIVATION_BACKGROUNDS: OriginBackground[] = [
   },
   {
     id: 'cul-courtesan',
-    name: '青楼头牌',
-    description: '你曾是青楼头牌，琴棋书画样样精通。一个偶然的机会让你踏上修仙路，你的容貌和心机在修仙界依然是利器。',
+    name: '清客书生',
+    description: '你曾是游走于权贵之门的清客，琴棋书画样样精通，也见惯了人情冷暖。一个偶然的机会让你踏上修仙路，你的才情和心机在修仙界依然是利器。',
     episodeBonus: 1,
   },
   {
@@ -343,9 +391,9 @@ const CULTIVATION_BACKGROUNDS: OriginBackground[] = [
     episodeBonus: 0,
   },
   {
-    id: 'cul-princess',
-    name: '落难王族',
-    description: '你曾是凡间王族，国破家亡后被一位修仙者所救。你失去了一切，但也因此了无牵挂，修行之心比任何人都坚定。',
+    id: 'cul-prince',
+    name: '落难皇子',
+    description: '你曾是凡间王朝的皇子，国破家亡后被一位修仙者所救。你失去了一切，但也因此了无牵挂，修行之心比任何人都坚定。',
     episodeBonus: -1,
   },
   {
@@ -402,6 +450,24 @@ const CULTIVATION_BACKGROUNDS: OriginBackground[] = [
     description: '你是凡间赫赫有名的剑客，一剑霜寒十四州。你不屑于修仙界的繁文缛节，只相信手中的剑。你的剑意，连修士都要忌惮三分。',
     episodeBonus: 1,
   },
+  {
+    id: 'cul-general',
+    name: '沙场将军',
+    description: '你曾是凡间王朝的大将军，统率千军万马，战功赫赫。一次边境大战中你意外觉醒灵根，从此放下兵符，踏上修仙之路。你的统御之才在修仙界依然有用。',
+    episodeBonus: 2,
+  },
+  {
+    id: 'cul-assassin',
+    name: '影阁杀手',
+    description: '你曾是凡间第一杀手组织影阁的王牌，杀人于无形。你厌倦了刀口舔血的日子，偶然得到一本修仙功法后金盆洗手。你的潜行和暗杀之术，在修仙界依然致命。',
+    episodeBonus: 1,
+  },
+  {
+    id: 'cul-hermit',
+    name: '隐世道人',
+    description: '你自幼被一位隐世高人收为弟子，在深山之中修炼了三十年。你不懂人情世故，修为却远超同辈。下山历练的你，对这个世界充满了好奇。',
+    episodeBonus: 3,
+  },
 ];
 
 const CULTIVATION_TALENTS: TalentCard[] = [
@@ -414,6 +480,9 @@ const CULTIVATION_TALENTS: TalentCard[] = [
   { id: 'c-t6', name: '丹道天赋', description: '炼丹时成功率远高于常人', rarity: 'rare', episodeBonus: 2 },
   { id: 'c-t7', name: '气运加身', description: '总能在险境中遇到机缘', rarity: 'rare', episodeBonus: 2 },
   { id: 'c-t8', name: '心境通透', description: '不易走火入魔，心魔难侵', rarity: 'rare', episodeBonus: 2 },
+  { id: 'c-t15', name: '天生神力', description: '肉身力量远超同阶修士', rarity: 'epic', episodeBonus: 3 },
+  { id: 'c-t16', name: '阵道天赋', description: '对阵法有天然的领悟力', rarity: 'epic', episodeBonus: 3 },
+  { id: 'c-t17', name: '统御之才', description: '天生能让修士追随和信服', rarity: 'rare', episodeBonus: 2 },
   // 负面天赋
   { id: 'c-t9', name: '五灵根', description: '五行俱全却样样平庸，修炼进境极慢', rarity: 'common', episodeBonus: -4 },
   { id: 'c-t10', name: '四灵根', description: '四属性灵根，资质下等', rarity: 'common', episodeBonus: -2 },

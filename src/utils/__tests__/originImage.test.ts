@@ -16,11 +16,11 @@ const mockWorldview: Worldview = {
 
 const originA: OriginSetup = {
   gender: 'female',
-  background: { id: 'palace-noble', name: '世家嫡女', description: '', episodeBonus: 4 },
+  background: { id: 'palace-noble', name: '世家嫡脉', description: '', episodeBonus: 4 },
   talents: [
-    { id: 'p-t3', name: '绝色容颜', description: '', rarity: 'legendary', episodeBonus: 4 },
+    { id: 'p-t3', name: '仪表堂堂', description: '', rarity: 'legendary', episodeBonus: 4 },
     { id: 'p-t4', name: '玲珑七窍', description: '', rarity: 'epic', episodeBonus: 3 },
-    { id: 'p-t8', name: '家世显赫', description: '', rarity: 'epic', episodeBonus: 3 },
+    { id: 'p-t8', name: '父族显赫', description: '', rarity: 'epic', episodeBonus: 3 },
   ],
   initialTrait: 'ambitious',
 };
@@ -78,7 +78,7 @@ describe('角色生成系统确定性验证', () => {
 
   it('提示词包含天赋外貌特征', () => {
     const prompt = buildOriginImagePrompt(mockWorldview, originA);
-    expect(prompt).toContain('strikingly beautiful face');
+    expect(prompt).toContain('handsome dignified face');
     expect(prompt).toContain('clever perceptive gaze');
   });
 
