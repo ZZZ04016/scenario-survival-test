@@ -11,9 +11,11 @@ initInteractionTracking()
 import { registerSW } from 'virtual:pwa-register'
 const updateSW = registerSW({
   immediate: true,
-  // 检测到新版本时自动激活并刷新页面，避免用户看到旧版缓存
+  // 检测到新版本时立即激活并刷新页面，彻底避免旧缓存
   onNeedRefresh() {
     updateSW(true) // true = skipWaiting，立即激活新 SW
+    // 新 SW 激活后强制刷新，确保用户看到最新内容
+    setTimeout(() => window.location.reload(), 300)
   },
   onOfflineReady() {
     // 离线可用提示（静默处理即可）
